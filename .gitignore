@@ -17,6 +17,7 @@
 # Debugger Files
 *.pdb
 
+compile_commands.json
 # Compiled Dynamic libraries
 *.so
 *.dylib
