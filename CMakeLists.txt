@@ -8,14 +8,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 1. Find the package FIRST
 find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
-
 # 2. Define the executable and all its source files
-add_executable(physics 
-    main.cpp 
-    math/Vec3.cpp
-    physics/RigidBody.cpp
+# Grab all .cpp and .hpp files in the src/ directory
+# CONFIGURE_DEPENDS tells CMake to re-configure if the directory contents change
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS 
+    "*/*.cpp" 
+    "*/*.h"
+    "*/*.hpp"
 )
 
+# Add them to your executable or library
+add_executable(physics ${SOURCES})
 # 3. Tell the compiler where to find headers
 target_include_directories(physics PRIVATE .)
 

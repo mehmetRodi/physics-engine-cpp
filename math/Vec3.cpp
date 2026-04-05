@@ -29,3 +29,8 @@ Vec3 Vec3::cross(const Vec3 &other) const {
 float Vec3::lengthSq() const { return dot(*this); }
 
 float Vec3::length() const { return std::sqrt(lengthSq()); }
+
+Vec3 Vec3::normalized() const {
+  float length = Vec3::length();
+  return Vec3(x / length, y / length, z / length);
+}
