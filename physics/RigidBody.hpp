@@ -9,7 +9,7 @@ struct RigidBody {
   float invMass; // Used for multiplication cuz it is faster
   float radius;  // radius to be used in collision detection
 
-  RigidBody(float m, float r);
+  RigidBody(float mass, float radius);
 
   void applyForce(const Vec3 &force);
 

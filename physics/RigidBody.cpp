@@ -1,7 +1,7 @@
 #include "RigidBody.hpp"
-RigidBody::RigidBody(float m, float r) : mass(m), radius(r) {
-  if (m > 0.0f)
-    invMass = 1.0f / m;
+RigidBody::RigidBody(float mass, float radius) : mass(mass), radius(radius) {
+  if (mass > 0.0f)
+    invMass = 1.0f / mass;
   else
     invMass = 0.0f; // represents unmovable object
 }
