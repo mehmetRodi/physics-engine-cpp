@@ -14,7 +14,7 @@ int main() {
 
   sf::Clock clock; // to track delta time dt
 
-  RigidBody body(1.0f);
+  RigidBody body(1.0f, 20.0f);
   body.position = Vec3(400, 100, 0);
   // This is the "Game Loop"
   while (window.isOpen()) {

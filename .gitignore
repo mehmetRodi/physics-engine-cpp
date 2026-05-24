@@ -40,3 +40,7 @@ compile_commands.json
 
 # debug information files
 *.dwo
+
+requirements.md
+tasks.md
+AGENTS.md
