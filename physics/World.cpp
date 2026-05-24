@@ -35,7 +35,12 @@ void World::resolveCollisions() {
 }
 
 void World::resolveContact(RigidBody *body1, RigidBody *body2) {
-  Vec3 collisionNormal = (body1->position - body2->position).normalized();
+  Vec3 offset = body1->position - body2->position;
+  if (offset.lengthSq() < 1e-12f) {
+    return;
+  }
+
+  Vec3 collisionNormal = offset.normalized();
   Vec3 relativeVelocity = body1->velocity - body2->velocity;
   float closingSpeed = relativeVelocity.dot(collisionNormal);
 
