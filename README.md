@@ -1,23 +1,25 @@
 # 3D Rigid Body Physics Engine
 
-A real-time 3D physics engine written in C++20, built with a focus on cache-efficient data layouts, SIMD-accelerated math, and low-latency constraint solving.
+A planned real-time 3D physics engine written in C++20, built as a portfolio project for deterministic simulation, numerical robustness, performance measurement, and low-latency systems engineering tradeoffs.
 
 > **Status:** In active development
 
 ---
 
-## Features
+## Planned Features
 
 - **Rigid body dynamics** — forces, torque, angular momentum, inertia tensor
 - **Broadphase collision** — BVH tree with SoA memory layout for cache efficiency
-- **Narrowphase collision** — GJK + EPA for convex shapes (in progress)
+- **Narrowphase collision** — GJK + EPA for convex shapes
 - **Constraint solver** — sequential impulse solver with friction and restitution
-- **SIMD math** — Vec3/Quaternion operations accelerated with AVX2 intrinsics
+- **SIMD math** — Vec3/Quaternion operations accelerated with AVX2 intrinsics, after scalar correctness and benchmarks
 - **Debug renderer** — orthographic wireframe view via SFML
 
 ---
 
 ## Performance
+
+Performance work is planned, but benchmark numbers are not published yet. Any future performance claims should be measured in a Release or RelWithDebInfo build with enough methodology detail to be repeatable.
 
 > Benchmarks run with [Google Benchmark](https://github.com/google/benchmark)
 > on AMD R7-5800H, Linux 6.19.10-200.fc43.x86_64, compiler: Clang 16 `-O2`.
@@ -32,7 +34,7 @@ _Numbers will be updated as each optimization pass is completed and measured wit
 
 ---
 
-## Architecture
+## Target Architecture
 
 ```
 physics_engine/
@@ -45,11 +47,11 @@ physics_engine/
 └── main.cpp        # Entry point + demo scene
 ```
 
-Key design decisions:
+Planned design direction:
 
-- **SoA layout** in broadphase — positions and AABBs stored in separate arrays to maximise cache line utilisation during BVH traversal
-- **AVX2 SIMD** for Vec3 batch operations — explicit intrinsics rather than relying on auto-vectorisation
-- **No heap allocations on the hot path** — all physics objects pre-allocated in a pool at startup
+- **SoA layout** in broadphase — positions and AABBs stored in separate arrays to maximise cache line utilisation during BVH traversal, once profiling justifies the layout
+- **AVX2 SIMD** for Vec3 batch operations — explicit intrinsics only after scalar code is correct and measured
+- **No heap allocations on the hot path** — physics storage should be reserved or pre-allocated before simulation steps where practical
 - **Deterministic integrator** — fixed timestep with semi-implicit Euler, reproducible across runs
 
 ---

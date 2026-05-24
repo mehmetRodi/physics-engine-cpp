@@ -45,6 +45,10 @@ float Vec3::lengthSq() const { return dot(*this); }
 float Vec3::length() const { return std::sqrt(lengthSq()); }
 
 Vec3 Vec3::normalized() const {
-  float length = Vec3::length();
-  return Vec3(x / length, y / length, z / length);
+  float len_sq = lengthSq();
+  if (len_sq < 1e-12f) {
+    return Vec3(0.0f, 0.0f, 0.0f);
+  }
+  float len = std::sqrt(len_sq);
+  return Vec3(x / len, y / len, z / len);
 }
