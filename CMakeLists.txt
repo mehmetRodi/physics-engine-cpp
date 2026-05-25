@@ -38,6 +38,20 @@ if(BUILD_DEMO)
   target_link_libraries(physics PRIVATE physics_core sfml-graphics sfml-window sfml-system)
 endif()
 
+option(BUILD_BENCHMARKS "Build benchmark executables" OFF)
+
+if(BUILD_BENCHMARKS)
+  add_executable(world_step_bench bench/world_step_bench.cpp)
+  target_link_libraries(world_step_bench PRIVATE physics_core)
+
+  if(MSVC)
+    target_compile_options(world_step_bench PRIVATE /W4)
+  else()
+    target_compile_options(world_step_bench PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+endif()
+
+
 include(CTest)
 
 if(BUILD_TESTING)
