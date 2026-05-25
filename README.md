@@ -19,18 +19,36 @@ A planned real-time 3D physics engine written in C++20, built as a portfolio pro
 
 ## Performance
 
-Performance work is planned, but benchmark numbers are not published yet. Any future performance claims should be measured in a Release or RelWithDebInfo build with enough methodology detail to be repeatable.
+Performance work is measured only in Release or RelWithDebInfo builds. Current
+benchmarking is intentionally simple: an in-repo `std::chrono` harness reports
+latency distributions for fixed workloads before any optimization claims are
+made.
 
-> Benchmarks run with [Google Benchmark](https://github.com/google/benchmark)
-> on AMD R7-5800H, Linux 6.19.10-200.fc43.x86_64, compiler: Clang 16 `-O2`.
+Current benchmark target:
 
-| System                              | Naive | Optimized | Speedup |
-| ----------------------------------- | ----- | --------- | ------- |
-| Broadphase — 1000 bodies            | —     | —         | TBD     |
-| Constraint solver — 500 constraints | —     | —         | TBD     |
-| Vec3 dot product — 1M ops           | —     | —         | TBD     |
+- `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
+  bodies over a fixed timestep. This includes integration and the current
+  deterministic O(n^2) sphere-pair scan, but mostly avoids collision response.
 
-_Numbers will be updated as each optimization pass is completed and measured with `perf stat`._
+Initial local sample:
+
+| Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `World::step` | 1024 | 100 | 1000 | 661452 ns | 675167 ns | 688333 ns | 720125 ns |
+
+Environment for the sample above:
+
+- Machine: MacBook Air M4, 24 GB RAM
+- OS: macOS 26.5, build 25F71
+- Architecture: arm64
+- Compiler: AppleClang 21.0.0
+- CMake: 4.3.2
+- Build type: Release
+- Release flags from CMake: `-O3 -DNDEBUG`
+
+These numbers are an initial local baseline, not an optimization claim. Future
+performance work should compare before/after results using the same workload,
+build type, machine, and methodology.
 
 ---
 
@@ -42,7 +60,7 @@ physics_engine/
 ├── physics/        # RigidBody, World, Integrator, Solver, Constraints
 ├── collision/      # Broadphase (BVH), Narrowphase (GJK/EPA), Contact
 ├── renderer/       # Debug wireframe renderer (SFML)
-├── bench/          # Google Benchmark suites
+├── bench/          # Custom benchmark harnesses
 ├── tests/          # Unit tests (Google Test)
 └── main.cpp        # Entry point + demo scene
 ```
@@ -73,27 +91,25 @@ brew install sfml cmake llvm
 ```bash
 git clone https://github.com/yourusername/physics-engine-cpp
 cd physics-engine-cpp
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++
-make -j$(nproc)
-./physics
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+./build/physics
 ```
 
 **Run benchmarks:**
 
 ```bash
-cmake .. -DBUILD_BENCHMARKS=ON
-make -j$(nproc)
-./bench/broadphase_bench
-./bench/solver_bench
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_DEMO=OFF -DBUILD_TESTING=OFF -DBUILD_BENCHMARKS=ON
+cmake --build build-release --target world_step_bench
+./build-release/world_step_bench
 ```
 
 **Run tests:**
 
 ```bash
-cmake .. -DBUILD_TESTS=ON
-make -j$(nproc)
-ctest --output-on-failure
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
 ---
@@ -107,7 +123,7 @@ ctest --output-on-failure
 - [ ] GJK + EPA narrowphase
 - [ ] Sequential impulse constraint solver
 - [ ] AVX2 SIMD math pass
-- [ ] Google Benchmark suite with perf stat measurements
+- [ ] Benchmark suite with repeatable methodology and latency distributions
 - [ ] Friction and restitution
 - [ ] Demo scenes (Newton's cradle, dominos, stacking)
 
