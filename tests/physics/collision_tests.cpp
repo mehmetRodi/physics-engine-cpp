@@ -120,3 +120,18 @@ TEST(CollisionTests, OverlappingStaticBodiesDoNotChangeVelocity) {
   EXPECT_FLOAT_EQ(world.body(body2).velocity.y, 0.f);
   EXPECT_FLOAT_EQ(world.body(body2).velocity.z, 0.f);
 }
+
+TEST(CollisionTests, OverlappingDynamicBodiesAreSeparated) {
+  World world(Vec3(0.f, 0.f, 0.f));
+
+  const World::BodyId body1 = world.createBody(1.0f, 1.0f);
+  world.body(body1).position = Vec3(0.f, 0.f, 0.f);
+
+  const World::BodyId body2 = world.createBody(1.0f, 1.0f);
+  world.body(body2).position = Vec3(1.5f, 0.f, 0.f);
+
+  world.step(0.0f);
+
+  EXPECT_FLOAT_EQ(world.body(body1).position.x, -0.25f);
+  EXPECT_FLOAT_EQ(world.body(body2).position.x, 1.75f);
+}
