@@ -154,3 +154,54 @@ TEST(CollisionTests, ZeroRestitutionEqualMassCollisionStopsBothBodies) {
   EXPECT_FLOAT_EQ(world.body(body1).velocity.x, 0.f);
   EXPECT_FLOAT_EQ(world.body(body2).velocity.x, 0.f);
 }
+
+TEST(CollisionTests, RestitutionUsesBouncierMaterial) {
+  World world(Vec3(0.f, 0.f, 0.f));
+
+  const World::BodyId body1 = world.createBody(1.0f, 1.0f);
+  world.body(body1).position = Vec3(0.f, 0.f, 0.f);
+  world.body(body1).velocity = Vec3(1.f, 0.f, 0.f);
+  world.body(body1).material.restitution = 0.f;
+
+  const World::BodyId body2 = world.createBody(1.0f, 1.0f);
+  world.body(body2).position = Vec3(0.5f, 0.f, 0.f);
+  world.body(body2).velocity = Vec3(-1.f, 0.f, 0.f);
+  world.body(body2).material.restitution = 1.f;
+
+  world.step(0.0f);
+
+  EXPECT_FLOAT_EQ(world.body(body1).velocity.x, -1.f);
+  EXPECT_FLOAT_EQ(world.body(body2).velocity.x, 1.f);
+}
+
+TEST(CollisionTests, HeadOnDifferentMassCollisionUsesInverseMass) {
+  World world(Vec3(0.f, 0.f, 0.f));
+
+  const World::BodyId lightBody = world.createBody(1.0f, 1.0f);
+  world.body(lightBody).position = Vec3(0.f, 0.f, 0.f);
+  world.body(lightBody).velocity = Vec3(1.f, 0.f, 0.f);
+
+  const World::BodyId heavyBody = world.createBody(3.0f, 1.0f);
+  world.body(heavyBody).position = Vec3(0.5f, 0.f, 0.f);
+  world.body(heavyBody).velocity = Vec3(-1.f, 0.f, 0.f);
+
+  world.step(0.0f);
+
+  EXPECT_FLOAT_EQ(world.body(lightBody).velocity.x, -2.f);
+  EXPECT_FLOAT_EQ(world.body(heavyBody).velocity.x, 0.f);
+}
+
+TEST(CollisionTests, OverlappingDynamicBodyIsSeparatedFromStaticBody) {
+  World world(Vec3(0.f, 0.f, 0.f));
+
+  const World::BodyId dynamicBody = world.createBody(1.0f, 1.0f);
+  world.body(dynamicBody).position = Vec3(0.f, 0.f, 0.f);
+
+  const World::BodyId staticBody = world.createBody(0.0f, 1.0f);
+  world.body(staticBody).position = Vec3(1.5f, 0.f, 0.f);
+
+  world.step(0.0f);
+
+  EXPECT_FLOAT_EQ(world.body(dynamicBody).position.x, -0.5f);
+  EXPECT_FLOAT_EQ(world.body(staticBody).position.x, 1.5f);
+}
