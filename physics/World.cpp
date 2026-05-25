@@ -49,6 +49,19 @@ void World::resolveContact(RigidBody &body1, RigidBody &body2) {
   }
 
   Vec3 collisionNormal = offset.normalized();
+  const float inverseMassSum = body1.invMass + body2.invMass;
+  if (inverseMassSum <= 0.f) {
+    return;
+  }
+
+  const float distance = offset.length();
+  const float penetration = body1.radius + body2.radius - distance;
+  if (penetration > 0.f) {
+    const Vec3 correction = collisionNormal * (penetration / inverseMassSum);
+    body1.position += correction * body1.invMass;
+    body2.position -= correction * body2.invMass;
+  }
+
   Vec3 relativeVelocity = body1.velocity - body2.velocity;
   float closingSpeed = relativeVelocity.dot(collisionNormal);
 
@@ -57,11 +70,6 @@ void World::resolveContact(RigidBody &body1, RigidBody &body2) {
 
   float e = 1; // coefficient of restitution (0 = perfectly inelastic, 1 =
                // perfectly elastic)
-
-  const float inverseMassSum = body1.invMass + body2.invMass;
-  if (inverseMassSum <= 0.f) {
-    return;
-  }
 
   float impulseMagnitude =
       -(1.f + e) * (closingSpeed) / inverseMassSum;
