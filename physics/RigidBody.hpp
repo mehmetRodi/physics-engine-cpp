@@ -2,7 +2,7 @@
 #include "math/Vec3.hpp"
 
 struct BodyMaterial {
-  float restitution;
+  float restitution = 1.0f;
 };
 
 struct RigidBody {

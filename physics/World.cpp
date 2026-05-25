@@ -1,6 +1,7 @@
 #include "World.hpp"
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
+#include <algorithm>
 World::World(Vec3 gravity) : m_gravity(gravity) {}
 
 World::BodyId World::createBody(float mass, float radius) {
@@ -68,11 +69,11 @@ void World::resolveContact(RigidBody &body1, RigidBody &body2) {
   if (closingSpeed >= 0)
     return;
 
-  float e = 1; // coefficient of restitution (0 = perfectly inelastic, 1 =
-               // perfectly elastic)
+  const float restitution =
+      std::max(body1.material.restitution, body2.material.restitution);
 
   float impulseMagnitude =
-      -(1.f + e) * (closingSpeed) / inverseMassSum;
+      -(1.f + restitution) * (closingSpeed) / inverseMassSum;
 
   body1.velocity += collisionNormal * impulseMagnitude * body1.invMass;
   body2.velocity -= collisionNormal * impulseMagnitude * body2.invMass;
