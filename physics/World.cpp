@@ -58,8 +58,13 @@ void World::resolveContact(RigidBody &body1, RigidBody &body2) {
   float e = 1; // coefficient of restitution (0 = perfectly inelastic, 1 =
                // perfectly elastic)
 
+  const float inverseMassSum = body1.invMass + body2.invMass;
+  if (inverseMassSum <= 0.f) {
+    return;
+  }
+
   float impulseMagnitude =
-      -(1.f + e) * (closingSpeed) / (body1.invMass + body2.invMass);
+      -(1.f + e) * (closingSpeed) / inverseMassSum;
 
   body1.velocity += collisionNormal * impulseMagnitude * body1.invMass;
   body2.velocity -= collisionNormal * impulseMagnitude * body2.invMass;
