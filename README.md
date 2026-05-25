@@ -29,12 +29,25 @@ Current benchmark target:
 - `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
   bodies over a fixed timestep. This includes integration and the current
   deterministic O(n^2) sphere-pair scan, but mostly avoids collision response.
+- `vec3_bench`: measures one million scalar `Vec3::dot` operations and reports
+  total time plus nanoseconds per operation. The result is accumulated into a
+  printed checksum so Release builds cannot optimize the loop away.
+- `sphere_pair_bench`: measures the current naive O(n^2) sphere overlap
+  predicate separately from integration and collision response.
 
 Initial local sample:
 
 | Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `World::step` | 1024 | 100 | 1000 | 661452 ns | 675167 ns | 688333 ns | 720125 ns |
+| `World::step` | 1024 | 100 | 1000 | 685016 ns | 695958 ns | 711083 ns | 781667 ns |
+
+| Benchmark | Operations | Total | Per operation |
+| --- | ---: | ---: | ---: |
+| `Vec3::dot` | 1000000 | 946584 ns | 0.946584 ns |
+
+| Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Sphere pair check | 1024 | 100 | 52377600 | 66938542 ns | 1.278 ns |
 
 Environment for the sample above:
 
@@ -102,6 +115,10 @@ cmake --build build
 cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_DEMO=OFF -DBUILD_TESTING=OFF -DBUILD_BENCHMARKS=ON
 cmake --build build-release --target world_step_bench
 ./build-release/world_step_bench
+cmake --build build-release --target vec3_bench
+./build-release/vec3_bench
+cmake --build build-release --target sphere_pair_bench
+./build-release/sphere_pair_bench
 ```
 
 **Run tests:**

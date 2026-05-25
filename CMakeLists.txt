@@ -44,10 +44,20 @@ if(BUILD_BENCHMARKS)
   add_executable(world_step_bench bench/world_step_bench.cpp)
   target_link_libraries(world_step_bench PRIVATE physics_core)
 
+  add_executable(vec3_bench bench/vec3_bench.cpp)
+  target_link_libraries(vec3_bench PRIVATE physics_core)
+
+  add_executable(sphere_pair_bench bench/sphere_pair_bench.cpp)
+  target_link_libraries(sphere_pair_bench PRIVATE physics_core)
+
   if(MSVC)
     target_compile_options(world_step_bench PRIVATE /W4)
+    target_compile_options(vec3_bench PRIVATE /W4)
+    target_compile_options(sphere_pair_bench PRIVATE /W4)
   else()
     target_compile_options(world_step_bench PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(vec3_bench PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(sphere_pair_bench PRIVATE -Wall -Wextra -Wpedantic)
   endif()
 endif()
 
