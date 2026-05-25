@@ -7,10 +7,8 @@
 #include <cstddef>
 #include <iostream>
 
-int main() {
-  constexpr std::size_t bodyCount = 1024;
-  constexpr float dt = 1.0f / 60.0f;
-
+namespace {
+World createWorld(std::size_t bodyCount) {
   World world(Vec3(0.f, -9.8f, 0.f));
   world.reserveBodies(bodyCount);
 
@@ -24,13 +22,38 @@ int main() {
     world.body(body).velocity = Vec3(0.1f, -0.2f, 0.f);
   }
 
+  return world;
+}
+
+double averageNanoseconds(const std::vector<std::uint64_t> &samples) {
+  std::uint64_t total = 0;
+
+  for (const std::uint64_t sample : samples) {
+    total += sample;
+  }
+
+  return static_cast<double>(total) / static_cast<double>(samples.size());
+}
+
+std::uint64_t percentileNanoseconds(const std::vector<std::uint64_t> &samples,
+                                    double percentile) {
+  const std::size_t index = static_cast<std::size_t>(
+      percentile * static_cast<double>(samples.size() - 1));
+  return samples[index];
+}
+} // namespace
+
+int main() {
+  constexpr std::size_t bodyCount = 1024;
+  constexpr float dt = 1.0f / 60.0f;
   constexpr int warmupSteps = 100;
+  constexpr int measuredSteps = 1000;
+
+  World world = createWorld(bodyCount);
 
   for (int i = 0; i < warmupSteps; ++i) {
     world.step(dt);
   }
-
-  constexpr int measuredSteps = 1000;
 
   std::vector<std::uint64_t> samples;
   samples.reserve(measuredSteps);
@@ -51,25 +74,9 @@ int main() {
 
   std::sort(samples.begin(), samples.end());
 
-  std::uint64_t total = 0;
-  std::uint64_t max = 0;
-
-  for (const std::uint64_t sample : samples) {
-    total += sample;
-
-    if (sample > max) {
-      max = sample;
-    }
-  }
-
-  const double average =
-      static_cast<double>(total) / static_cast<double>(samples.size());
-
-  const std::uint64_t p95 = samples[static_cast<std::size_t>(
-      0.95 * static_cast<double>(samples.size() - 1))];
-
-  const std::uint64_t p99 = samples[static_cast<std::size_t>(
-      0.99 * static_cast<double>(samples.size() - 1))];
+  const double average = averageNanoseconds(samples);
+  const std::uint64_t p95 = percentileNanoseconds(samples, 0.95);
+  const std::uint64_t p99 = percentileNanoseconds(samples, 0.99);
 
   std::cout << "World::step benchmark\n";
   std::cout << "body_count: " << bodyCount << '\n';
