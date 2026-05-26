@@ -32,7 +32,8 @@ Current benchmark target:
 
 - `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
   bodies over a fixed timestep. This includes integration and the current
-  deterministic O(n^2) sphere-pair scan, but mostly avoids collision response.
+  deterministic O(n^2) `findSpherePairs` scan, but mostly avoids collision
+  response.
 - `vec3_bench`: measures one million scalar `Vec3::dot` operations and reports
   total time plus nanoseconds per operation. The result is accumulated into a
   printed checksum so Release builds cannot optimize the loop away.
@@ -44,7 +45,7 @@ Initial local sample:
 
 | Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `World::step` | 1024 | 100 | 1000 | 685016 ns | 695958 ns | 711083 ns | 781667 ns |
+| `World::step` | 1024 | 100 | 1000 | 647297 ns | 672542 ns | 683083 ns | 701583 ns |
 
 | Benchmark | Operations | Total | Per operation |
 | --- | ---: | ---: | ---: |

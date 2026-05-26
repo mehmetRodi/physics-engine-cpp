@@ -1,7 +1,10 @@
 #include "physics/World.hpp"
+
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
+
 #include <algorithm>
+
 World::World(Vec3 gravity) : m_gravity(gravity) {}
 
 World::BodyId World::createBody(float mass, float radius) {
@@ -14,7 +17,10 @@ RigidBody &World::body(BodyId id) { return m_bodies[id]; }
 
 const RigidBody &World::body(BodyId id) const { return m_bodies[id]; }
 
-void World::reserveBodies(std::size_t capacity) { m_bodies.reserve(capacity); }
+void World::reserveBodies(std::size_t capacity) {
+  m_bodies.reserve(capacity);
+  m_sphereProxies.reserve(capacity);
+}
 
 void World::step(float dt) {
   for (RigidBody &body : m_bodies) {
@@ -24,22 +30,22 @@ void World::step(float dt) {
   resolveCollisions();
 }
 
+void World::buildSphereProxies() {
+  m_sphereProxies.clear();
+  m_sphereProxies.reserve(m_bodies.size());
+
+  for (std::size_t i = 0; i < m_bodies.size(); ++i) {
+    const RigidBody &body = m_bodies[i];
+    m_sphereProxies.push_back({i, body.position, body.radius});
+  }
+}
+
 void World::resolveCollisions() {
-  for (size_t i = 0; i < m_bodies.size(); i++) {
-    RigidBody &body1 = m_bodies[i];
+  buildSphereProxies();
+  findSpherePairs(m_sphereProxies, m_collisionPairs);
 
-    for (size_t j = i + 1; j < m_bodies.size(); j++) {
-      RigidBody &body2 = m_bodies[j];
-
-      float radiusSum = body1.radius + body2.radius;
-      float radiusSumSq = radiusSum * radiusSum;
-      Vec3 diffVector = body1.position - body2.position;
-      float diffSq = diffVector.lengthSq();
-
-      if (radiusSumSq > diffSq) {
-        resolveContact(body1, body2);
-      }
-    }
+  for (const CollisionPair &pair : m_collisionPairs) {
+    resolveContact(m_bodies[pair.a], m_bodies[pair.b]);
   }
 }
 
