@@ -1,6 +1,8 @@
-# 3D Rigid Body Physics Engine
+# 3D Physics Engine
 
-A planned real-time 3D physics engine written in C++20, built as a portfolio project for deterministic simulation, numerical robustness, performance measurement, and low-latency systems engineering tradeoffs.
+A planned real-time 3D physics simulation engine written in C++20, built as a portfolio project for deterministic simulation, numerical robustness, performance measurement, and low-latency systems engineering tradeoffs.
+
+The current implementation starts with rigid-body sphere simulation because it is the smallest useful foundation for integration, collision, contacts, and benchmarking. The project is not intended to be rigid-body-only; future modules should fit the same deterministic, testable, benchmarkable architecture.
 
 > **Status:** In active development
 
@@ -8,7 +10,9 @@ A planned real-time 3D physics engine written in C++20, built as a portfolio pro
 
 ## Planned Features
 
+- **Core simulation architecture** — fixed timestep, deterministic replay, explicit ownership, testable headless execution
 - **Rigid body dynamics** — forces, torque, angular momentum, inertia tensor
+- **Particle and constraint systems** — added after the rigid-body foundation has clean solver and contact boundaries
 - **Broadphase collision** — BVH tree with SoA memory layout for cache efficiency
 - **Narrowphase collision** — GJK + EPA for convex shapes
 - **Constraint solver** — sequential impulse solver with friction and restitution
@@ -70,8 +74,9 @@ build type, machine, and methodology.
 ```
 physics_engine/
 ├── math/           # Vec3, Mat3, Quaternion, AABB, SIMD intrinsics
-├── physics/        # RigidBody, World, Integrator, Solver, Constraints
+├── physics/        # World, simulation state, integrators, solver-facing data
 ├── collision/      # Broadphase (BVH), Narrowphase (GJK/EPA), Contact
+├── dynamics/       # Future domain modules: rigid bodies, particles, deformables
 ├── renderer/       # Debug wireframe renderer (SFML)
 ├── bench/          # Custom benchmark harnesses
 ├── tests/          # Unit tests (Google Test)
@@ -134,7 +139,8 @@ ctest --test-dir build --output-on-failure
 ## Roadmap
 
 - [ ] Vec3, Mat3, Quaternion math library
-- [ ] RigidBody integration (semi-implicit Euler)
+- [ ] Rigid-body module integration (semi-implicit Euler)
+- [ ] Particle simulation module
 - [ ] SFML debug renderer
 - [ ] BVH broadphase with SoA layout
 - [ ] GJK + EPA narrowphase
