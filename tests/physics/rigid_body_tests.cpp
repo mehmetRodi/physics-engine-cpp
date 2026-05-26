@@ -47,3 +47,14 @@ TEST(RigidBodyTests, LinearDampingReducesVelocityDuringUpdate) {
   EXPECT_FLOAT_EQ(body.velocity.x, 7.5f);
   EXPECT_FLOAT_EQ(body.position.x, 7.5f);
 }
+
+TEST(RigidBodyTests, LinearDampingDoesNotReverseVelocity) {
+  RigidBody body(1.0f, 20.0f);
+  body.velocity = Vec3(10.0f, 0.0f, 0.0f);
+  body.material.linearDamping = 2.0f;
+
+  body.update(1.0f);
+
+  EXPECT_FLOAT_EQ(body.velocity.x, 0.0f);
+  EXPECT_FLOAT_EQ(body.position.x, 0.0f);
+}
