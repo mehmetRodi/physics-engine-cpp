@@ -1,0 +1,224 @@
+# Design Decisions
+
+This file records project decisions that are easy to forget but important for
+future design, implementation, and interview explanation.
+
+Use this for choices where there is more than one reasonable option, especially
+when the current implementation is intentionally simple but should grow into a
+cleaner engine architecture later.
+
+Each entry should explain:
+
+- the decision
+- the context that made the decision necessary
+- the tradeoffs
+- the current status, such as accepted, temporary, or needs revisit
+
+Use this rough format for new entries:
+
+```md
+## Decision Title
+
+Decision: what was chosen.
+
+Context: why the choice came up.
+
+Tradeoff: what this buys and what it costs.
+
+Status: accepted, temporary, or needs revisit.
+
+Future direction: what should change later, if anything.
+```
+
+## Project Scope
+
+Decision: the project is a general C++20 physics simulation engine, not a
+rigid-body-only engine.
+
+Why now: rigid-body sphere simulation is the first implemented module because it
+is the smallest useful path for learning integration, collision detection,
+contact response, determinism, tests, and benchmarks. That should not constrain
+the final product identity or force future APIs to assume every simulated object
+is a rigid body.
+
+Tradeoff: keeping the top-level scope broader requires discipline. The project
+should not start adding particles, deformables, fluids, or many domain modules
+before the current rigid-body foundation has clean timing, ownership, collision,
+solver, test, and benchmark boundaries.
+
+Future direction: keep rigid-body-specific names where they describe real code,
+such as `RigidBody`, but make shared architecture names domain-neutral where
+appropriate. Future simulation domains should plug into the same fixed-step,
+headless-testable, benchmarkable architecture instead of becoming renderer-driven
+demo code.
+
+## Vec3 Scalar Division Policy
+
+Decision: `Vec3::operator/(float)` performs direct component-wise floating-point
+division and assumes the scalar is nonzero.
+
+Context: scalar division is needed for basic math completeness and lets
+normalization reuse a single vector division path. The current implementation
+already handles zero-length normalization before division, so the common
+normalization edge case remains explicit and tested.
+
+Tradeoff: direct division keeps the math primitive small, predictable, and
+cheap. It does not silently clamp invalid input or return a made-up vector,
+which avoids hiding physics bugs. The cost is that general division by zero is
+not guarded yet and follows the platform's floating-point behavior.
+
+Status: temporary. Valid scalar division is implemented and tested. General
+division-by-zero policy still needs to be documented with the broader
+floating-point assumptions work.
+
+Future direction: decide whether invalid scalar division should remain a
+documented precondition, gain debug assertions, or be handled by a named safe
+helper. Avoid exceptions in core hot-path math unless the project deliberately
+changes its error-handling policy.
+
+## Restitution Mixing
+
+Decision: use the maximum restitution value of the two colliding bodies for the
+current simple sphere collision path.
+
+Why now: this keeps restitution on bodies/materials instead of making it a
+global `World` setting. It also gives intuitive simple behavior: a bouncy body
+can still bounce when it hits a less bouncy or static body.
+
+Tradeoff: `max` is a material policy, not a universal physics rule. Other
+engines may use `min`, average, multiplication, or configurable combine modes.
+
+Future direction: move restitution mixing out of `World::resolveContact` and
+into a named contact/material path. A later design should have explicit contact
+data, for example:
+
+```cpp
+struct Contact {
+  World::BodyId a;
+  World::BodyId b;
+  Vec3 normal;
+  float penetration;
+  float restitution;
+  float friction;
+};
+```
+
+At that point, material policy can live in a small function such as:
+
+```cpp
+float mixRestitution(const BodyMaterial& a, const BodyMaterial& b);
+```
+
+That keeps `World` focused on simulation flow while contact generation prepares
+solver-ready data.
+
+## Identical-Position Dynamic Overlaps
+
+Decision: the current simple sphere collision path does not resolve dynamic
+bodies that have exactly identical positions.
+
+Why now: when two sphere centers are identical, the contact normal is ambiguous.
+Choosing an arbitrary normal inside `World::resolveContact` would make the simple
+solver look more complete than it is and could hide a policy that belongs in
+contact generation.
+
+Tradeoff: overlapping bodies at identical positions can remain overlapped for
+now. The current behavior is deliberate and tested: no ambiguous impulse is
+applied.
+
+Future direction: when contact generation becomes explicit, choose a
+deterministic fallback normal or use previous-frame/contact-cache information to
+recover a stable normal. That decision should live near contact creation, not in
+the impulse solver.
+
+## Initial Benchmark Harness
+
+Decision: start with a small in-repo `std::chrono` benchmark executable for
+`World::step` before adding Google Benchmark.
+
+Why now: the first performance goal is to establish repeatable methodology and
+latency distribution reporting, not to make optimization claims. A simple custom
+harness can report per-step min, average, p95, p99, and max latency without
+adding another dependency or hiding the measurement loop.
+
+Tradeoff: Google Benchmark provides a mature framework for microbenchmarks and
+should still be considered later. The custom harness is less feature-rich and
+must be kept honest about warmup, build type, workload, and environment.
+
+Future direction: once the project has several benchmark cases, either keep the
+custom harness for simulation-level latency distribution tests or add Google
+Benchmark for focused microbenchmarks such as `Vec3` operations, broadphase pair
+generation, and solver kernels.
+
+## Microbenchmark Result Consumption
+
+Decision: initial math microbenchmarks consume their computed results by
+accumulating them into a printed checksum.
+
+Why now: a tight benchmark loop that computes values but never observes them can
+be optimized away by the compiler, especially in Release builds. Printing a
+checksum is a simple, inspectable way to make the work observable without adding
+benchmark-framework-specific escape hatches.
+
+Tradeoff: the checksum itself is not part of the intended math workload, so it
+must be kept outside the timed region where possible or limited to simple
+accumulation that represents realistic dependent work. The printed value is a
+correctness guard, not a performance metric.
+
+Future direction: if the project adopts Google Benchmark later, use its
+`DoNotOptimize` and `ClobberMemory` helpers for focused microbenchmarks.
+
+## Pair-Check Benchmark Scope
+
+Decision: benchmark the current naive sphere pair-generation API in a standalone
+benchmark instead of exposing `World::resolveCollisions` internals.
+
+Why now: the goal is to measure candidate-pair scanning separately from
+integration and collision response. Making private `World` methods public only
+for benchmarking would weaken the simulation API, while a standalone benchmark
+keeps the measured workload obvious and isolated.
+
+Tradeoff: the benchmark is still a synthetic workload. It measures pair
+generation cost through `findSpherePairs`, but it does not include integration,
+contact resolution, or future broadphase/narrowphase data flow.
+
+Future direction: once broadphase becomes a richer module, keep this benchmark
+focused on the public pair-generation API and add separate benchmarks for
+contact generation and solving.
+
+## Pair Generation Output Buffers
+
+Decision: provide both a convenient return-by-value `findSpherePairs` API and a
+hot-path-friendly overload that writes into a caller-owned
+`std::vector<CollisionPair>`.
+
+Why now: pair generation is a simulation hot path. Returning a vector is easy to
+use in tests and simple callers, but repeated calls can allocate or grow storage.
+The output-buffer overload lets benchmarks and `World` stepping reserve capacity
+once and reuse memory across iterations.
+
+Tradeoff: the output-buffer API is slightly more verbose and requires callers to
+understand that the function clears the output vector before writing. This is a
+reasonable explicit ownership and allocation tradeoff for hot-path code.
+
+Future direction: when broadphase becomes a richer module, keep allocation
+behavior explicit. Consider preallocated pair storage, spans, or arena-backed
+buffers only after the simpler reusable-vector API has measured limitations.
+
+## World Collision Pair Discovery
+
+Decision: `World::resolveCollisions` builds sphere proxies from the current body
+storage, calls `findSpherePairs`, and then resolves the returned body-index
+pairs.
+
+Why now: this moves pair discovery out of `World` without changing the current
+body ownership model. `World` remains responsible for simulation flow and contact
+response, while `collision/` owns the deterministic sphere-pair query.
+
+Tradeoff: `World` still builds rigid-body sphere proxies each step because the
+current body storage is the source of truth. This is simple and correct for the
+current engine shape, but it is not the final broadphase representation.
+
+Future direction: as contacts become explicit solver data, move from direct pair
+resolution toward a pipeline of body proxies, collision pairs, contact
+manifolds, and solver constraints.
