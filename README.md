@@ -13,13 +13,12 @@ The current implementation starts with rigid-body sphere simulation because it i
 - **Scalar math primitives** — `Vec3` arithmetic, dot/cross products, length, and normalization tests
 - **Rigid-body sphere simulation** — world-owned bodies, fixed-step integration, and deterministic storage order
 - **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
-- **Headless tests** — CTest/GoogleTest coverage for math, world stepping, rigid bodies, and sphere collision
+- **Headless tests** — CTest/GoogleTest coverage for math, world stepping, deterministic replay, rigid bodies, and sphere collision
 - **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, and `World::step`
 - **SFML debug demo** — visual rigid-body sphere scene with pause, step, and reset controls
 
 ## Planned Work
 
-- Deterministic replay tests for fixed inputs
 - Force accumulation, materials, restitution, friction, and damping policies
 - Broadphase collision with measured baseline and later optimized layouts
 - Constraint solving with documented convergence and latency behavior

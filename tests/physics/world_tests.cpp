@@ -2,6 +2,47 @@
 
 #include "physics/World.hpp"
 
+#include <array>
+#include <cstddef>
+
+namespace {
+
+constexpr std::size_t kReplayBodyCount = 4;
+constexpr float kReplayDt = 1.0f / 60.0f;
+constexpr int kReplaySteps = 120;
+
+struct ReplayScenario {
+  World world;
+  std::array<World::BodyId, kReplayBodyCount> bodies{};
+};
+
+ReplayScenario createReplayScenario() {
+  ReplayScenario scenario{World(Vec3(0.f, -9.8f, 0.f))};
+  scenario.world.reserveBodies(kReplayBodyCount);
+
+  scenario.bodies[0] = scenario.world.createBody(1.0f, 0.5f);
+  scenario.world.body(scenario.bodies[0]).position = Vec3(-1.5f, 0.0f, 0.0f);
+  scenario.world.body(scenario.bodies[0]).velocity = Vec3(2.0f, 0.0f, 0.0f);
+  scenario.world.body(scenario.bodies[0]).material.restitution = 0.25f;
+
+  scenario.bodies[1] = scenario.world.createBody(2.0f, 0.5f);
+  scenario.world.body(scenario.bodies[1]).position = Vec3(1.5f, 0.0f, 0.0f);
+  scenario.world.body(scenario.bodies[1]).velocity = Vec3(-1.0f, 0.0f, 0.0f);
+  scenario.world.body(scenario.bodies[1]).material.restitution = 0.75f;
+
+  scenario.bodies[2] = scenario.world.createBody(0.0f, 0.75f);
+  scenario.world.body(scenario.bodies[2]).position = Vec3(0.0f, -3.25f, 0.0f);
+
+  scenario.bodies[3] = scenario.world.createBody(0.5f, 0.35f);
+  scenario.world.body(scenario.bodies[3]).position = Vec3(0.75f, 2.0f, 0.0f);
+  scenario.world.body(scenario.bodies[3]).velocity = Vec3(-0.5f, -0.25f, 0.0f);
+  scenario.world.body(scenario.bodies[3]).material.restitution = 0.5f;
+
+  return scenario;
+}
+
+} // namespace
+
 TEST(WorldTests, GravityAffectsDynamicBodyDuringStep) {
   World world(Vec3(0.f, -9.8f, 0.f));
   const World::BodyId body = world.createBody(1.0f, 20.0f);
@@ -30,6 +71,28 @@ TEST(WorldTests, SameInitialStateProducesSameResult) {
 
   EXPECT_FLOAT_EQ(world1.body(body1).velocity.y, world2.body(body2).velocity.y);
   EXPECT_FLOAT_EQ(world1.body(body1).position.y, world2.body(body2).position.y);
+}
+
+TEST(WorldTests, FixedScenarioReplayProducesIdenticalFinalState) {
+  ReplayScenario replay1 = createReplayScenario();
+  ReplayScenario replay2 = createReplayScenario();
+
+  for (int step = 0; step < kReplaySteps; ++step) {
+    replay1.world.step(kReplayDt);
+    replay2.world.step(kReplayDt);
+  }
+
+  for (std::size_t i = 0; i < kReplayBodyCount; ++i) {
+    const RigidBody& body1 = replay1.world.body(replay1.bodies[i]);
+    const RigidBody& body2 = replay2.world.body(replay2.bodies[i]);
+
+    EXPECT_FLOAT_EQ(body1.position.x, body2.position.x);
+    EXPECT_FLOAT_EQ(body1.position.y, body2.position.y);
+    EXPECT_FLOAT_EQ(body1.position.z, body2.position.z);
+    EXPECT_FLOAT_EQ(body1.velocity.x, body2.velocity.x);
+    EXPECT_FLOAT_EQ(body1.velocity.y, body2.velocity.y);
+    EXPECT_FLOAT_EQ(body1.velocity.z, body2.velocity.z);
+  }
 }
 
 TEST(WorldTests, StaticBodyDoesNotMoveUnderGravity) {
