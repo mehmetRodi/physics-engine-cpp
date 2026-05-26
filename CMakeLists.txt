@@ -71,6 +71,13 @@ if(BUILD_DEMO)
   target_link_libraries(physics PRIVATE physics_core sfml-graphics sfml-window sfml-system)
 endif()
 
+option(BUILD_HEADLESS_DEMOS "Build headless demo executables" ON)
+
+if(BUILD_HEADLESS_DEMOS)
+  add_executable(headless_replay demo/headless_replay.cpp)
+  target_link_libraries(headless_replay PRIVATE physics_core)
+endif()
+
 option(BUILD_BENCHMARKS "Build benchmark executables" OFF)
 
 if(BUILD_BENCHMARKS)
