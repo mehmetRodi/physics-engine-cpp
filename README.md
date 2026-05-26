@@ -98,6 +98,19 @@ Planned design direction:
 - **No heap allocations on the hot path** — physics storage should be reserved or pre-allocated before simulation steps where practical
 - **Deterministic integrator** — fixed timestep with semi-implicit Euler, reproducible across runs
 
+## Floating-Point Reproducibility
+
+Deterministic replay is currently scoped to the same source code, input data,
+platform, compiler, build type, and floating-point compiler flags. The engine
+uses scalar `float` math and assumes normal IEEE-754 single-precision behavior.
+
+Do not build simulation or benchmark targets with flags that weaken IEEE
+floating-point semantics or permit unsafe reassociation, including
+`-ffast-math`, `-Ofast`, `-funsafe-math-optimizations`, `-fassociative-math`,
+`-freciprocal-math`, `-ffinite-math-only`, or MSVC `/fp:fast`. CMake rejects
+these flags when they are passed through the standard `CMAKE_CXX_FLAGS*`
+variables.
+
 ---
 
 ## Build

@@ -7,6 +7,38 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+function(reject_nonreproducible_fp_flags)
+  set(DISALLOWED_FP_FLAGS
+      "-ffast-math"
+      "-Ofast"
+      "-funsafe-math-optimizations"
+      "-fassociative-math"
+      "-freciprocal-math"
+      "-ffinite-math-only"
+      "/fp:fast"
+  )
+  set(FLAG_VARIABLES
+      CMAKE_CXX_FLAGS
+      CMAKE_CXX_FLAGS_DEBUG
+      CMAKE_CXX_FLAGS_RELEASE
+      CMAKE_CXX_FLAGS_RELWITHDEBINFO
+      CMAKE_CXX_FLAGS_MINSIZEREL
+  )
+
+  foreach(flag_var IN LISTS FLAG_VARIABLES)
+    foreach(disallowed_flag IN LISTS DISALLOWED_FP_FLAGS)
+      string(FIND "${${flag_var}}" "${disallowed_flag}" flag_index)
+      if(NOT flag_index EQUAL -1)
+        message(FATAL_ERROR
+            "Flag ${disallowed_flag} in ${flag_var} is not allowed because it "
+            "can break deterministic floating-point replay.")
+      endif()
+    endforeach()
+  endforeach()
+endfunction()
+
+reject_nonreproducible_fp_flags()
+
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     "math/*.cpp"
     "physics/*.cpp"

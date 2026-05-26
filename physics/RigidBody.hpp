@@ -3,6 +3,7 @@
 
 struct BodyMaterial {
   float restitution = 1.0f;
+  float linearDamping = 0.0f;
 };
 
 struct RigidBody {
@@ -16,7 +17,7 @@ struct RigidBody {
 
   RigidBody(float mass, float radius);
 
-  void applyForce(const Vec3 &force);
+  void applyForce(const Vec3& force);
 
   void update(float dt);
 };

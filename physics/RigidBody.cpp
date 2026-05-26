@@ -5,7 +5,7 @@ RigidBody::RigidBody(float mass, float radius) : mass(mass), radius(radius) {
   else
     invMass = 0.0f; // represents unmovable object
 }
-void RigidBody::applyForce(const Vec3 &force) {
+void RigidBody::applyForce(const Vec3& force) {
 
   acceleration = acceleration + (force * invMass);
 }
@@ -13,8 +13,9 @@ void RigidBody::applyForce(const Vec3 &force) {
 void RigidBody::update(float dt) {
   // semi-implicit Euler Integration
   velocity = velocity + (acceleration * dt);
+  velocity = velocity *
+             (1.0f - material.linearDamping * dt); // could be a problem if linearDamping * dt > 1
   position = position + (velocity * dt);
 
-  acceleration =
-      Vec3(0.0f, 0.0f, 0.0f); // reset acceleration for the next frame
+  acceleration = Vec3(0.0f, 0.0f, 0.0f); // reset acceleration for the next frame
 }

@@ -76,6 +76,37 @@ documented precondition, gain debug assertions, or be handled by a named safe
 helper. Avoid exceptions in core hot-path math unless the project deliberately
 changes its error-handling policy.
 
+## Floating-Point Reproducibility Policy
+
+Decision: deterministic simulation results are guaranteed only for the same
+source code, input data, platform, compiler, build type, and floating-point
+compiler flags. Core simulation code currently uses scalar `float` arithmetic
+and assumes normal IEEE-754 single-precision behavior from the compiler and
+standard library.
+
+Context: fixed-step replay tests protect same-build determinism, but bitwise
+cross-platform reproducibility is a larger policy that depends on compiler
+optimization choices, math-library behavior, CPU features, and future SIMD
+paths. The current engine should be honest about the guarantee it can test
+today.
+
+Tradeoff: this keeps the implementation simple and inspectable while avoiding
+false claims about cross-machine bit identity. It also rules out optimization
+flags that let the compiler reassociate operations, assume finite values only,
+replace division with approximate reciprocals, or otherwise ignore IEEE edge
+behavior. Disallowed flags include `-ffast-math`, `-Ofast`,
+`-funsafe-math-optimizations`, `-fassociative-math`, `-freciprocal-math`,
+`-ffinite-math-only`, and MSVC `/fp:fast`.
+
+Status: accepted for the current scalar engine. CMake rejects the known
+non-reproducible flags above when they are passed through the standard
+`CMAKE_CXX_FLAGS*` variables.
+
+Future direction: if the project later needs stronger cross-platform replay,
+add a replay hash/checkpoint format, document exact supported compiler versions
+and CPU modes, and isolate any SIMD or approximate math behind tested,
+determinism-aware build options.
+
 ## Restitution Mixing
 
 Decision: use the maximum restitution value of the two colliding bodies for the
