@@ -116,6 +116,17 @@ cmake --build build
 ./build/physics
 ```
 
+**Visual demo controls:**
+
+- `Space`: pause or resume fixed-step simulation
+- `N`: advance one fixed simulation step while paused
+- `R`: reset to the deterministic initial sphere scene
+- `Esc`: quit
+
+The current SFML demo is a debug renderer for rigid-body spheres. Sphere-sphere
+collision comes from the physics core; the rectangular arena walls are handled
+in demo code until general boundary/collision-shape support exists.
+
 **Run benchmarks:**
 
 ```bash
