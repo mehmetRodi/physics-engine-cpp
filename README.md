@@ -8,16 +8,23 @@ The current implementation starts with rigid-body sphere simulation because it i
 
 ---
 
-## Planned Features
+## Implemented Features
 
-- **Core simulation architecture** — fixed timestep, deterministic replay, explicit ownership, testable headless execution
-- **Rigid body dynamics** — forces, torque, angular momentum, inertia tensor
-- **Particle and constraint systems** — added after the rigid-body foundation has clean solver and contact boundaries
-- **Broadphase collision** — BVH tree with SoA memory layout for cache efficiency
-- **Narrowphase collision** — GJK + EPA for convex shapes
-- **Constraint solver** — sequential impulse solver with friction and restitution
-- **SIMD math** — Vec3/Quaternion operations accelerated with AVX2 intrinsics, after scalar correctness and benchmarks
-- **Debug renderer** — orthographic wireframe view via SFML
+- **Scalar math primitives** — `Vec3` arithmetic, dot/cross products, length, and normalization tests
+- **Rigid-body sphere simulation** — world-owned bodies, fixed-step integration, and deterministic storage order
+- **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
+- **Headless tests** — CTest/GoogleTest coverage for math, world stepping, rigid bodies, and sphere collision
+- **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, and `World::step`
+- **SFML debug demo** — visual rigid-body sphere scene with pause, step, and reset controls
+
+## Planned Work
+
+- Deterministic replay tests for fixed inputs
+- Force accumulation, materials, restitution, friction, and damping policies
+- Broadphase collision with measured baseline and later optimized layouts
+- Constraint solving with documented convergence and latency behavior
+- Additional simulation domains only after the shared stepping, testing, and benchmarking model is clear
+- SIMD, custom allocation, and multithreading only after scalar correctness and benchmarks justify them
 
 ---
 
@@ -100,20 +107,37 @@ Planned design direction:
 
 ```bash
 # Ubuntu/Debian
-sudo apt install libsfml-dev cmake clang
+sudo apt install cmake clang libsfml-dev
 
-# macOS
-brew install sfml cmake llvm
+# macOS with Homebrew
+brew install cmake llvm sfml@2
 ```
 
-**Build & run:**
+The visual demo depends on SFML 2.x. Headless tests and benchmarks can be built
+without SFML by passing `-DBUILD_DEMO=OFF`.
+
+**Debug build with demo and tests:**
 
 ```bash
 git clone https://github.com/yourusername/physics-engine-cpp
 cd physics-engine-cpp
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ./build/physics
+```
+
+**Release build for benchmarks:**
+
+```bash
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_DEMO=OFF -DBUILD_TESTING=OFF -DBUILD_BENCHMARKS=ON
+cmake --build build-release
+```
+
+**RelWithDebInfo build for profiling:**
+
+```bash
+cmake -S . -B build-relwithdebinfo -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_DEMO=OFF -DBUILD_TESTING=OFF -DBUILD_BENCHMARKS=ON
+cmake --build build-relwithdebinfo
 ```
 
 **Visual demo controls:**
@@ -147,19 +171,50 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+## Developer Workflow
+
+GitHub Actions builds the Debug demo and test binary on Ubuntu and macOS, then
+runs the headless CTest suite. This keeps the SFML demo build reproducible
+without requiring the visual app to launch in CI.
+
+**Formatting:**
+
+```bash
+git ls-files '*.hpp' '*.cpp' | xargs clang-format -i
+```
+
+If Homebrew LLVM is installed but not on `PATH`, use:
+
+```bash
+git ls-files '*.hpp' '*.cpp' | xargs $(brew --prefix llvm)/bin/clang-format -i
+```
+
+**Static analysis:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+git ls-files 'math/*.cpp' 'physics/*.cpp' 'collision/*.cpp' 'bench/*.cpp' | xargs clang-tidy -p build
+```
+
+If Homebrew LLVM is installed but not on `PATH`, use:
+
+```bash
+git ls-files 'math/*.cpp' 'physics/*.cpp' 'collision/*.cpp' 'bench/*.cpp' | xargs $(brew --prefix llvm)/bin/clang-tidy -p build
+```
+
 ---
 
 ## Roadmap
 
-- [ ] Vec3, Mat3, Quaternion math library
-- [ ] Rigid-body module integration (semi-implicit Euler)
+- [x] Initial Vec3 scalar math
+- [x] Rigid-body sphere integration with fixed timestep
 - [ ] Particle simulation module
-- [ ] SFML debug renderer
+- [x] SFML debug renderer
 - [ ] BVH broadphase with SoA layout
 - [ ] GJK + EPA narrowphase
 - [ ] Sequential impulse constraint solver
 - [ ] AVX2 SIMD math pass
-- [ ] Benchmark suite with repeatable methodology and latency distributions
+- [x] Initial benchmark harness with repeatable methodology and latency distributions
 - [ ] Friction and restitution
 - [ ] Demo scenes (Newton's cradle, dominos, stacking)
 
