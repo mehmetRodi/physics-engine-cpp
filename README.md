@@ -37,7 +37,8 @@ Current benchmark target:
   total time plus nanoseconds per operation. The result is accumulated into a
   printed checksum so Release builds cannot optimize the loop away.
 - `sphere_pair_bench`: measures the current naive O(n^2) sphere overlap
-  predicate separately from integration and collision response.
+  predicate separately from integration and collision response, using the
+  reusable output-buffer pair-generation API.
 
 Initial local sample:
 
@@ -51,7 +52,7 @@ Initial local sample:
 
 | Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Sphere pair check | 1024 | 100 | 52377600 | 66938542 ns | 1.278 ns |
+| Sphere pair check | 1024 | 100 | 52377600 | 64217750 ns | 1.22605 ns |
 
 Environment for the sample above:
 

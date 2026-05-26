@@ -1,4 +1,4 @@
-#include "math/Vec3.hpp"
+#include "collision/SpherePair.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -9,11 +9,6 @@
 namespace {
 using Clock = std::chrono::steady_clock;
 
-struct SphereProxy {
-  Vec3 position;
-  float radius;
-};
-
 std::vector<SphereProxy> createSphereProxies(std::size_t bodyCount) {
   std::vector<SphereProxy> proxies;
   proxies.reserve(bodyCount);
@@ -21,31 +16,10 @@ std::vector<SphereProxy> createSphereProxies(std::size_t bodyCount) {
   for (std::size_t i = 0; i < bodyCount; ++i) {
     const float x = static_cast<float>(i % 64) * 0.75f;
     const float y = static_cast<float>(i / 64) * 0.75f;
-    proxies.push_back({Vec3(x, y, 0.0f), 0.5f});
+    proxies.push_back({i, Vec3(x, y, 0.0f), 0.5f});
   }
 
   return proxies;
-}
-
-std::size_t countOverlappingPairs(const std::vector<SphereProxy> &proxies) {
-  std::size_t overlappingPairs = 0;
-
-  for (std::size_t i = 0; i < proxies.size(); ++i) {
-    const SphereProxy &a = proxies[i];
-
-    for (std::size_t j = i + 1; j < proxies.size(); ++j) {
-      const SphereProxy &b = proxies[j];
-
-      const float radiusSum = a.radius + b.radius;
-      const Vec3 offset = a.position - b.position;
-
-      if (offset.lengthSq() < radiusSum * radiusSum) {
-        ++overlappingPairs;
-      }
-    }
-  }
-
-  return overlappingPairs;
 }
 } // namespace
 
@@ -54,13 +28,18 @@ int main() {
   constexpr int iterations = 100;
 
   const std::vector<SphereProxy> proxies = createSphereProxies(bodyCount);
+  const std::size_t pairsPerIteration = bodyCount * (bodyCount - 1) / 2;
+
+  std::vector<CollisionPair> pairs;
+  pairs.reserve(pairsPerIteration);
 
   std::size_t checksum = 0;
 
   const auto start = Clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-    checksum += countOverlappingPairs(proxies);
+    findSpherePairs(proxies, pairs);
+    checksum += pairs.size();
   }
 
   const auto end = Clock::now();
@@ -68,7 +47,6 @@ int main() {
   const auto totalNanoseconds =
       std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-  const std::size_t pairsPerIteration = bodyCount * (bodyCount - 1) / 2;
   const std::size_t totalPairChecks = pairsPerIteration * iterations;
   const double nanosecondsPerPairCheck = static_cast<double>(totalNanoseconds) /
                                          static_cast<double>(totalPairChecks);

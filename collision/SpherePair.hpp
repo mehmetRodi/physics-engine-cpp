@@ -14,5 +14,8 @@ struct CollisionPair {
   std::size_t b;
 };
 
+void findSpherePairs(const std::vector<SphereProxy> &spheres,
+                     std::vector<CollisionPair> &outPairs);
+
 std::vector<CollisionPair>
 findSpherePairs(const std::vector<SphereProxy> &spheres);
