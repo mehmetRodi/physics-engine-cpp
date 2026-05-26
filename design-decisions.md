@@ -253,3 +253,20 @@ current engine shape, but it is not the final broadphase representation.
 Future direction: as contacts become explicit solver data, move from direct pair
 resolution toward a pipeline of body proxies, collision pairs, contact
 manifolds, and solver constraints.
+
+## Linear Damping Policy
+
+Decision: apply linear damping as a per-body material property during rigid-body
+velocity integration, clamping the damping scale to `[0, 1]`.
+
+Why now: damping is part of the first rigid-body dynamics policy, and the engine
+needs deterministic behavior for large timesteps or high damping values. Without
+clamping, damping can reverse velocity, which is not the intended behavior.
+
+Tradeoff: this is a simple explicit damping model, not a physically complete drag
+or material interaction model. It is deterministic, easy to test, and appropriate
+for the current scalar rigid-body module.
+
+Future direction: when contacts, constraints, and richer materials are added,
+revisit whether damping belongs directly on the body, in material data, or in an
+integrator policy shared by multiple simulation domains.
