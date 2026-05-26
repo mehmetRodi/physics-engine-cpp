@@ -1,4 +1,4 @@
-#include "Vec3.hpp"
+#include "math/Vec3.hpp"
 #include <cmath>
 
 Vec3::Vec3() : x(0.0f), y(0.0f), z(0.0f) {}

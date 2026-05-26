@@ -10,6 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     "math/*.cpp"
     "physics/*.cpp"
+    "collision/*.cpp"
 )
 
 add_library(physics_core ${SOURCES})

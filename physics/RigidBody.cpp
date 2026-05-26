@@ -1,4 +1,4 @@
-#include "RigidBody.hpp"
+#include "physics/RigidBody.hpp"
 RigidBody::RigidBody(float mass, float radius) : mass(mass), radius(radius) {
   if (mass > 0.0f)
     invMass = 1.0f / mass;

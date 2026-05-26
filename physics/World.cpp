@@ -1,4 +1,4 @@
-#include "World.hpp"
+#include "physics/World.hpp"
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
 #include <algorithm>
