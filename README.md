@@ -15,7 +15,7 @@ The current implementation starts with rigid-body sphere simulation because it i
 - **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
 - **Headless tests** — CTest/GoogleTest coverage for math, world stepping, deterministic replay, rigid bodies, and sphere collision
 - **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, and `World::step`
-- **SFML debug demo** — visual rigid-body sphere scene with pause, step, and reset controls
+- **SFML debug demo** — visual rigid-body sphere scene with fixed-step controls, trails, contact highlights, static obstacles, and click-to-spawn bodies
 
 ## Planned Work
 
@@ -23,6 +23,7 @@ The current implementation starts with rigid-body sphere simulation because it i
 - Broadphase collision with measured baseline and later optimized layouts
 - Constraint solving with documented convergence and latency behavior
 - Additional simulation domains only after the shared stepping, testing, and benchmarking model is clear
+- Camera/navigation and immersive inspection controls for visual demos, so simulations can be inspected at useful scales without coupling physics to rendering
 - SIMD, custom allocation, and multithreading only after scalar correctness and benchmarks justify them
 
 ---
@@ -157,11 +158,16 @@ cmake --build build-relwithdebinfo
 - `Space`: pause or resume fixed-step simulation
 - `N`: advance one fixed simulation step while paused
 - `R`: reset to the deterministic initial sphere scene
+- `T`: toggle motion trails
+- `Up`/`Down`: adjust fixed-step playback speed
+- Left click inside the arena: add one dynamic sphere
 - `Esc`: quit
 
 The current SFML demo is a debug renderer for rigid-body spheres. Sphere-sphere
 collision comes from the physics core; the rectangular arena walls are handled
-in demo code until general boundary/collision-shape support exists.
+in demo code until general boundary/collision-shape support exists. Static
+obstacle spheres are represented as zero-inverse-mass bodies in the same core
+rigid-body system.
 
 **Run the deterministic console demo:**
 
@@ -240,6 +246,7 @@ git ls-files 'math/*.cpp' 'physics/*.cpp' 'collision/*.cpp' 'bench/*.cpp' | xarg
 - [ ] AVX2 SIMD math pass
 - [x] Initial benchmark harness with repeatable methodology and latency distributions
 - [ ] Friction and restitution
+- [ ] Camera and immersive inspection controls for visual demos
 - [ ] Demo scenes (Newton's cradle, dominos, stacking)
 
 ---

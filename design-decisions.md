@@ -125,6 +125,31 @@ explicit world-owned storage and deterministic step functions. Do not introduce
 a generic virtual module/plugin interface until multiple implemented domains
 show the shared stepping, ownership, testing, and benchmark requirements.
 
+## Demo Inspection Controls Stay Outside Core Physics
+
+Decision: visual demos should grow into proper physics inspection tools with
+camera/navigation controls and immersive interactions, but those controls remain
+outside the core simulation modules.
+
+Context: the project should function as a physics engine that can be used to
+experiment with and inspect physical behavior. That requires more than a static
+debug view: users need to pan, zoom, reset the view, pause, single-step, adjust
+playback speed, spawn or select objects, and inspect trails, contacts,
+constraints, and solver behavior as those systems are implemented.
+
+Tradeoff: richer demo controls make physical behavior easier to understand and
+improve portfolio presentation. The cost is that demo code can drift toward game
+or editor scope if the boundary is not kept clear.
+
+Status: accepted as demo-layer architecture guidance. Current controls are
+limited and should be documented as implemented or planned rather than implied
+as complete.
+
+Future direction: keep camera state, input handling, overlays, and scene
+interaction in demo/rendering code. Core physics should expose deterministic
+state and debug data through explicit APIs, but must not depend on SFML or any
+interactive renderer.
+
 ## Shared Simulation Concepts Across Domains
 
 Decision: shared simulation concepts are handles, materials, contacts,
