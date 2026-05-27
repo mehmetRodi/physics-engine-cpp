@@ -3,6 +3,7 @@
 #include "collision/SpherePair.hpp"
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
+#include "physics/RigidBodyContact.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -26,4 +27,5 @@ private:
   std::vector<RigidBody> m_bodies;
   std::vector<SphereProxy> m_sphereProxies;
   std::vector<CollisionPair> m_collisionPairs;
+  std::vector<RigidBodyContact> m_contacts;
 };

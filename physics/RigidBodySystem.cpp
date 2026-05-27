@@ -22,7 +22,9 @@ const RigidBody& RigidBodySystem::rigidBody(RigidBodyId id) const {
 void RigidBodySystem::reserveRigidBodies(std::size_t capacity) {
   m_bodies.reserve(capacity);
   m_sphereProxies.reserve(capacity);
-  m_collisionPairs.reserve(capacity * (capacity - 1) / 2);
+  const std::size_t pairCapacity = capacity * (capacity - 1) / 2;
+  m_collisionPairs.reserve(pairCapacity);
+  m_contacts.reserve(pairCapacity);
 }
 
 void RigidBodySystem::step(float dt, const Vec3& gravity) {
