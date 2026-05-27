@@ -294,6 +294,32 @@ contact and broadphase storage once Phase 5 introduces a real broadphase and
 Phase 6 separates solver-facing contact data. Keep deterministic iteration
 order and no-allocation hot-path tests when changing the storage model.
 
+## Rigid-Body Contact Storage
+
+Decision: rigid-body sphere contacts are stored as compact `RigidBodyContact`
+records containing body handles, contact normal, penetration depth, and mixed
+restitution. Contacts are generated in collision-pair order and resolved by
+looking up the live bodies from the stored handles.
+
+Context: the previous collision path resolved each `CollisionPair` immediately
+and recomputed contact geometry inside the resolver. Phase 4 needs an explicit
+solver-facing contact buffer before broadphase, narrowphase, and constraint
+solver work expands the pipeline.
+
+Tradeoff: contacts still reference array-backed body storage during resolution
+because positions and velocities must be mutated. This keeps contact records
+small and cache-friendly, but the current solver still gathers body state by
+handle instead of operating on a fully packed constraint batch.
+
+Status: accepted for the current rigid-body sphere path. A focused test checks
+that generated contacts preserve deterministic collision-pair order and store
+the expected contact data.
+
+Future direction: when Phase 6 introduces solver constraints, split contact
+generation from constraint preparation. Keep contact iteration deterministic,
+and only move additional fields into contact records when benchmarks or solver
+requirements justify the extra memory bandwidth.
+
 ## Identical-Position Dynamic Overlaps
 
 Decision: the current simple sphere collision path does not resolve dynamic
