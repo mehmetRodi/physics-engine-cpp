@@ -267,6 +267,33 @@ float mixRestitution(const BodyMaterial& a, const BodyMaterial& b);
 That keeps `World` focused on simulation flow while contact generation prepares
 solver-ready data.
 
+## Reserved Rigid-Body Step Allocation Policy
+
+Decision: `World::reserveRigidBodies(capacity)` preallocates current
+rigid-body hot-path storage for bodies, sphere proxies, and worst-case naive
+sphere collision pairs. For a reserved world that does not exceed that body
+capacity, `World::step(dt)` is expected not to allocate heap memory in the
+current rigid-body sphere path.
+
+Context: Phase 4 focuses on making data ownership and allocation behavior
+visible before introducing more complex data-oriented layouts. The current
+collision path is an all-pairs sphere check, so worst-case collision-pair
+storage for `n` bodies is `n * (n - 1) / 2`.
+
+Tradeoff: reserving worst-case pair capacity makes the hot-path allocation
+behavior simple and testable, but it can use much more memory than a sparse
+scene needs. This is acceptable for the current baseline because the broadphase
+is intentionally simple and measured optimization has not yet justified a more
+complex structure.
+
+Status: accepted for the current rigid-body sphere implementation and protected
+by a test that counts allocations during `World::step`.
+
+Future direction: replace worst-case pair preallocation with cache-friendly
+contact and broadphase storage once Phase 5 introduces a real broadphase and
+Phase 6 separates solver-facing contact data. Keep deterministic iteration
+order and no-allocation hot-path tests when changing the storage model.
+
 ## Identical-Position Dynamic Overlaps
 
 Decision: the current simple sphere collision path does not resolve dynamic
