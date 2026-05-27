@@ -74,6 +74,31 @@ first. Introduce shared interfaces or plugin-style stepping only when two or
 more implemented domains show the common requirements clearly through tests,
 benchmarks, and ownership constraints.
 
+## Fixed-Step Domain Integration Boundary
+
+Decision: `World::step(dt)` represents one deterministic simulation tick. The
+caller owns frame-time accumulation and should pass a fixed timestep for
+replayable simulation. The visual demo may accumulate render frame time, but
+that accumulator stays outside the core physics types.
+
+Context: Phase 3 needs a clear stepping boundary before additional simulation
+domains are added. The current rigid-body path integrates forces, updates body
+state, builds collision proxies, finds sphere pairs, and resolves contacts
+inside one `World::step` call. Tests, headless demos, and benchmarks already
+drive the world with explicit timestep values.
+
+Tradeoff: keeping `World::step` as a simple fixed-tick API is easy to test,
+benchmark, and replay. It avoids hiding variable frame time or renderer behavior
+inside the simulation core. The cost is that applications must manage their own
+accumulators and choose a timestep policy explicitly.
+
+Status: accepted for the current architecture checkpoint.
+
+Future direction: future domains should join the same fixed-tick flow through
+explicit world-owned storage and deterministic step functions. Do not introduce
+a generic virtual module/plugin interface until multiple implemented domains
+show the shared stepping, ownership, testing, and benchmark requirements.
+
 ## Vec3 Scalar Division Policy
 
 Decision: `Vec3::operator/(float)` performs direct component-wise floating-point

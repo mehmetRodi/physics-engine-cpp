@@ -20,6 +20,8 @@ public:
   const RigidBody& rigidBody(RigidBodyId id) const;
   void reserveRigidBodies(std::size_t capacity);
 
+  // Advances one deterministic simulation tick. Callers own frame-time
+  // accumulation and should pass a fixed dt for replayable simulation.
   void step(float dt);
 
 private:
