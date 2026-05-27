@@ -29,8 +29,8 @@ private:
 
   Vec3 m_gravity;
 
-  // World owns bodies in deterministic vector order. BodyId values are stable
-  // while bodies are only appended and never removed.
+  // World owns rigid bodies in deterministic vector order. RigidBodyId values
+  // are stable while rigid bodies are only appended and never removed.
   std::vector<RigidBody> m_bodies;
   std::vector<SphereProxy> m_sphereProxies;
   std::vector<CollisionPair> m_collisionPairs;

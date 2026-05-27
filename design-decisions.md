@@ -52,6 +52,28 @@ appropriate. Future simulation domains should plug into the same fixed-step,
 headless-testable, benchmarkable architecture instead of becoming renderer-driven
 demo code.
 
+## Rigid-Body API Boundary On World
+
+Decision: `World` remains the top-level simulation coordinator, but public APIs
+for the currently implemented domain are named explicitly as rigid-body APIs:
+`RigidBodyId`, `createRigidBody`, `rigidBody`, and `reserveRigidBodies`.
+
+Context: Phase 3 is separating top-level simulation concepts from
+rigid-body-specific state. The engine currently simulates rigid-body spheres
+only, but future particles, constraints, soft bodies, or fluids should not be
+forced through a generic "body" API that already means rigid body in practice.
+
+Tradeoff: explicit rigid-body names make the current implementation honest and
+leave room for other domains without adding an abstraction layer before it has
+real users. The cost is a slightly more verbose API today.
+
+Status: accepted for the current architecture checkpoint.
+
+Future direction: add future domains through explicit domain storage and APIs
+first. Introduce shared interfaces or plugin-style stepping only when two or
+more implemented domains show the common requirements clearly through tests,
+benchmarks, and ownership constraints.
+
 ## Vec3 Scalar Division Policy
 
 Decision: `Vec3::operator/(float)` performs direct component-wise floating-point
@@ -125,8 +147,8 @@ data, for example:
 
 ```cpp
 struct Contact {
-  World::BodyId a;
-  World::BodyId b;
+  World::RigidBodyId a;
+  World::RigidBodyId b;
   Vec3 normal;
   float penetration;
   float restitution;
