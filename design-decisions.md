@@ -74,6 +74,32 @@ first. Introduce shared interfaces or plugin-style stepping only when two or
 more implemented domains show the common requirements clearly through tests,
 benchmarks, and ownership constraints.
 
+## RigidBodySystem Owns Rigid-Body State
+
+Decision: rigid-body storage, integration, sphere proxy generation, collision
+pair buffers, and contact response live in `RigidBodySystem`. `World` owns
+world-level policy such as gravity and delegates rigid-body stepping through
+`RigidBodySystem::step(dt, gravity)`.
+
+Context: Phase 3 separates top-level simulation concepts from
+rigid-body-specific state. The previous `World` implementation directly owned
+rigid bodies, collision proxy buffers, pair buffers, and contact resolution.
+That made `World` look like a rigid-body-only container even though the project
+is intended to grow into additional simulation domains.
+
+Tradeoff: `RigidBodySystem` is more specific than a generic simulation-module
+interface, which keeps the code simple and avoids virtual dispatch or plugin
+machinery before there is a second domain. It is broader than
+`RigidBodyStorage` because the moved responsibility is not only storage; it is
+the current rigid-body update pipeline.
+
+Status: accepted for the current architecture checkpoint.
+
+Future direction: if a particle system or another domain is added, give it an
+explicit system with its own storage, deterministic step, tests, and benchmarks.
+Only extract a shared domain interface after multiple real systems reveal common
+requirements.
+
 ## Fixed-Step Domain Integration Boundary
 
 Decision: `World::step(dt)` represents one deterministic simulation tick. The
