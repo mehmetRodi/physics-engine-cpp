@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <vector>
 
+class RigidBodySystemTestAccess;
+
 class RigidBodySystem {
 public:
   using RigidBodyId = std::size_t;
@@ -20,9 +22,12 @@ public:
   void step(float dt, const Vec3& gravity);
 
 private:
+  friend class RigidBodySystemTestAccess;
+
   void buildSphereProxies();
   void resolveCollisions();
-  void resolveContact(RigidBody& body1, RigidBody& body2);
+  void resolveContact(const RigidBodyContact& contact);
+  void buildContacts();
 
   std::vector<RigidBody> m_bodies;
   std::vector<SphereProxy> m_sphereProxies;

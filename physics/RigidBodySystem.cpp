@@ -48,42 +48,66 @@ void RigidBodySystem::buildSphereProxies() {
 void RigidBodySystem::resolveCollisions() {
   buildSphereProxies();
   findSpherePairs(m_sphereProxies, m_collisionPairs);
+  buildContacts();
 
-  for (const CollisionPair& pair : m_collisionPairs) {
-    resolveContact(m_bodies[pair.a], m_bodies[pair.b]);
+  for (const RigidBodyContact& contact : m_contacts) {
+    resolveContact(contact);
   }
 }
 
-void RigidBodySystem::resolveContact(RigidBody& body1, RigidBody& body2) {
-  Vec3 offset = body1.position - body2.position;
-  if (offset.lengthSq() < 1e-12f) {
-    return;
-  }
+void RigidBodySystem::resolveContact(const RigidBodyContact& contact) {
+  RigidBody& body1 = m_bodies[contact.a];
+  RigidBody& body2 = m_bodies[contact.b];
 
-  Vec3 collisionNormal = offset.normalized();
   const float inverseMassSum = body1.invMass + body2.invMass;
   if (inverseMassSum <= 0.f) {
     return;
   }
 
-  const float distance = offset.length();
-  const float penetration = body1.radius + body2.radius - distance;
-  if (penetration > 0.f) {
-    const Vec3 correction = collisionNormal * (penetration / inverseMassSum);
-    body1.position += correction * body1.invMass;
-    body2.position -= correction * body2.invMass;
-  }
+  const Vec3 correction = contact.normal * (contact.penetration / inverseMassSum);
+  body1.position += correction * body1.invMass;
+  body2.position -= correction * body2.invMass;
 
   Vec3 relativeVelocity = body1.velocity - body2.velocity;
-  float closingSpeed = relativeVelocity.dot(collisionNormal);
+  float closingSpeed = relativeVelocity.dot(contact.normal);
 
-  if (closingSpeed >= 0)
+  if (closingSpeed >= 0.f) {
     return;
+  }
 
-  const float restitution = std::max(body1.material.restitution, body2.material.restitution);
+  float impulseMagnitude = -(1.f + contact.restitution) * closingSpeed / inverseMassSum;
 
-  float impulseMagnitude = -(1.f + restitution) * (closingSpeed) / inverseMassSum;
+  body1.velocity += contact.normal * impulseMagnitude * body1.invMass;
+  body2.velocity -= contact.normal * impulseMagnitude * body2.invMass;
+}
 
-  body1.velocity += collisionNormal * impulseMagnitude * body1.invMass;
-  body2.velocity -= collisionNormal * impulseMagnitude * body2.invMass;
+void RigidBodySystem::buildContacts() {
+  m_contacts.clear();
+
+  for (const CollisionPair& pair : m_collisionPairs) {
+    const RigidBody& body1 = m_bodies[pair.a];
+    const RigidBody& body2 = m_bodies[pair.b];
+
+    const Vec3 offset = body1.position - body2.position;
+    const float distanceSq = offset.lengthSq();
+
+    if (distanceSq < 1e-12f) {
+      continue;
+    }
+
+    const float distance = offset.length();
+    const float penetration = body1.radius + body2.radius - distance;
+
+    if (penetration <= 0.f) {
+      continue;
+    }
+
+    m_contacts.push_back({
+        pair.a,
+        pair.b,
+        offset / distance,
+        penetration,
+        std::max(body1.material.restitution, body2.material.restitution),
+    });
+  }
 }
