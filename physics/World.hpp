@@ -1,12 +1,12 @@
 #pragma once
-#include "collision/SpherePair.hpp"
 #include "math/Vec3.hpp"
-#include "physics/RigidBody.hpp"
+
+#include "physics/RigidBodySystem.hpp"
+
 #include <cstddef>
-#include <vector>
 class World {
 public:
-  using RigidBodyId = std::size_t;
+  using RigidBodyId = RigidBodySystem::RigidBodyId;
 
   World(Vec3 gravity);
   World(World&&) = default;
@@ -25,15 +25,7 @@ public:
   void step(float dt);
 
 private:
-  void buildSphereProxies();
-  void resolveCollisions();
-  void resolveContact(RigidBody& body1, RigidBody& body2);
-
   Vec3 m_gravity;
 
-  // World owns rigid bodies in deterministic vector order. RigidBodyId values
-  // are stable while rigid bodies are only appended and never removed.
-  std::vector<RigidBody> m_bodies;
-  std::vector<SphereProxy> m_sphereProxies;
-  std::vector<CollisionPair> m_collisionPairs;
+  RigidBodySystem m_rigidBodySystem;
 };
