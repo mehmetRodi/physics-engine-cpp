@@ -163,6 +163,18 @@ The current SFML demo is a debug renderer for rigid-body spheres. Sphere-sphere
 collision comes from the physics core; the rectangular arena walls are handled
 in demo code until general boundary/collision-shape support exists.
 
+**Run the deterministic console demo:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --target headless_replay
+./build/headless_replay
+```
+
+This demo runs fixed inputs for a fixed number of simulation steps and prints the
+final body state. It is intended to demonstrate deterministic replay behavior,
+not benchmark latency.
+
 **Run benchmarks:**
 
 ```bash

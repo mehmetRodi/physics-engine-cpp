@@ -6,26 +6,26 @@
 #include <vector>
 class World {
 public:
-  using BodyId = std::size_t;
+  using RigidBodyId = std::size_t;
 
   World(Vec3 gravity);
-  World(World &&) = default;
-  World(const World &) = delete;
-  World &operator=(World &&) = default;
-  World &operator=(const World &) = delete;
+  World(World&&) = default;
+  World(const World&) = delete;
+  World& operator=(World&&) = default;
+  World& operator=(const World&) = delete;
   ~World() = default;
 
-  BodyId createBody(float mass, float radius);
-  RigidBody &body(BodyId id);
-  const RigidBody &body(BodyId id) const;
-  void reserveBodies(std::size_t capacity);
+  RigidBodyId createRigidBody(float mass, float radius);
+  RigidBody& rigidBody(RigidBodyId id);
+  const RigidBody& body(RigidBodyId id) const;
+  void reserveRigidBodies(std::size_t capacity);
 
   void step(float dt);
 
 private:
   void buildSphereProxies();
   void resolveCollisions();
-  void resolveContact(RigidBody &body1, RigidBody &body2);
+  void resolveContact(RigidBody& body1, RigidBody& body2);
 
   Vec3 m_gravity;
 

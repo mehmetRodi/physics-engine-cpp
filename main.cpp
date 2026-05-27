@@ -37,9 +37,8 @@ sf::FloatRect arenaBounds() {
 
 sf::Color colorForBody(std::size_t index) {
   static const std::array<sf::Color, 6> palette = {
-      sf::Color(80, 220, 170),  sf::Color(255, 205, 90),
-      sf::Color(110, 170, 255), sf::Color(240, 110, 130),
-      sf::Color(180, 140, 255), sf::Color(125, 215, 245),
+      sf::Color(80, 220, 170),  sf::Color(255, 205, 90),  sf::Color(110, 170, 255),
+      sf::Color(240, 110, 130), sf::Color(180, 140, 255), sf::Color(125, 215, 245),
   };
 
   return palette[index % palette.size()];
@@ -47,7 +46,7 @@ sf::Color colorForBody(std::size_t index) {
 
 DemoScene createScene() {
   DemoScene scene{World(Vec3(0.0f, 0.0f, 0.0f)), {}, 0};
-  scene.world.reserveBodies(bodyCount);
+  scene.world.reserveRigidBodies(bodyCount);
   scene.bodies.reserve(bodyCount);
 
   constexpr std::size_t columns = 6;
@@ -61,16 +60,14 @@ DemoScene createScene() {
     const float mass = 0.8f + static_cast<float>(i % 5) * 0.45f;
     const World::BodyId id = scene.world.createBody(mass, radius);
 
-    RigidBody &body = scene.world.body(id);
-    body.position =
-        Vec3(startX + static_cast<float>(i % columns) * spacingX,
-             startY + static_cast<float>(i / columns) * spacingY, 0.0f);
+    RigidBody& body = scene.world.rigidBody(id);
+    body.position = Vec3(startX + static_cast<float>(i % columns) * spacingX,
+                         startY + static_cast<float>(i / columns) * spacingY, 0.0f);
 
     const float xDirection = (i % 2 == 0) ? 1.0f : -1.0f;
     const float yDirection = ((i / 2) % 2 == 0) ? 1.0f : -1.0f;
-    body.velocity =
-        Vec3(xDirection * (65.0f + static_cast<float>(i % 5) * 18.0f),
-             yDirection * (45.0f + static_cast<float>(i % 7) * 13.0f), 0.0f);
+    body.velocity = Vec3(xDirection * (65.0f + static_cast<float>(i % 5) * 18.0f),
+                         yDirection * (45.0f + static_cast<float>(i % 7) * 13.0f), 0.0f);
     body.material.restitution = 0.85f + static_cast<float>(i % 4) * 0.05f;
 
     scene.bodies.push_back({id, colorForBody(i)});
@@ -79,15 +76,15 @@ DemoScene createScene() {
   return scene;
 }
 
-void constrainToArena(World &world, const std::vector<RenderBody> &bodies) {
+void constrainToArena(World& world, const std::vector<RenderBody>& bodies) {
   const sf::FloatRect bounds = arenaBounds();
   const float left = bounds.left;
   const float right = bounds.left + bounds.width;
   const float top = bounds.top;
   const float bottom = bounds.top + bounds.height;
 
-  for (const RenderBody &renderBody : bodies) {
-    RigidBody &body = world.body(renderBody.id);
+  for (const RenderBody& renderBody : bodies) {
+    RigidBody& body = world.rigidBody(renderBody.id);
     const float restitution = body.material.restitution;
 
     if (body.position.x - body.radius < left) {
@@ -108,8 +105,8 @@ void constrainToArena(World &world, const std::vector<RenderBody> &bodies) {
   }
 }
 
-bool loadDebugFont(sf::Font &font) {
-  static constexpr std::array<const char *, 6> fontPaths = {
+bool loadDebugFont(sf::Font& font) {
+  static constexpr std::array<const char*, 6> fontPaths = {
       "assets/Inter-Regular.ttf",
       "assets/Arial.ttf",
       "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -118,7 +115,7 @@ bool loadDebugFont(sf::Font &font) {
       "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
   };
 
-  for (const char *path : fontPaths) {
+  for (const char* path : fontPaths) {
     if (font.loadFromFile(path)) {
       return true;
     }
@@ -127,20 +124,17 @@ bool loadDebugFont(sf::Font &font) {
   return false;
 }
 
-std::string debugString(bool paused, const DemoScene &scene) {
+std::string debugString(bool paused, const DemoScene& scene) {
   std::ostringstream out;
-  out << "Rigid-body sphere demo | bodies: " << scene.bodies.size()
-      << " | fixed dt: 1/60s"
-      << " | steps: " << scene.steps
-      << " | " << (paused ? "paused" : "running")
+  out << "Rigid-body sphere demo | bodies: " << scene.bodies.size() << " | fixed dt: 1/60s"
+      << " | steps: " << scene.steps << " | " << (paused ? "paused" : "running")
       << " | Space pause, N step, R reset, Esc quit";
   return out.str();
 }
 } // namespace
 
 int main() {
-  sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight),
-                          "Rigid-body sphere demo");
+  sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Rigid-body sphere demo");
   window.setVerticalSyncEnabled(true);
 
   DemoScene scene = createScene();
@@ -213,8 +207,8 @@ int main() {
     window.clear(sf::Color(8, 10, 14));
     window.draw(arena);
 
-    for (const RenderBody &renderBody : scene.bodies) {
-      const RigidBody &body = scene.world.body(renderBody.id);
+    for (const RenderBody& renderBody : scene.bodies) {
+      const RigidBody& body = scene.world.body(renderBody.id);
       shape.setRadius(body.radius);
       shape.setOrigin(body.radius, body.radius);
       shape.setPosition(body.position.x, body.position.y);

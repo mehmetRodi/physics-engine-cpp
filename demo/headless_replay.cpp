@@ -7,22 +7,22 @@ int main() {
   constexpr int steps = 120;
 
   World world(Vec3(0.0f, -9.8f, 0.0f));
-  world.reserveBodies(2);
+  world.reserveRigidBodies(2);
 
-  const World::BodyId falling = world.createBody(1.0f, 0.5f);
-  world.body(falling).position = Vec3(0.0f, 5.0f, 0.0f);
-  world.body(falling).velocity = Vec3(1.0f, 0.0f, 0.0f);
-  world.body(falling).material.restitution = 0.5f;
-  world.body(falling).material.linearDamping = 0.05f;
+  const World::RigidBodyId falling = world.createRigidBody(1.0f, 0.5f);
+  world.rigidBody(falling).position = Vec3(0.0f, 5.0f, 0.0f);
+  world.rigidBody(falling).velocity = Vec3(1.0f, 0.0f, 0.0f);
+  world.rigidBody(falling).material.restitution = 0.5f;
+  world.rigidBody(falling).material.linearDamping = 0.05f;
 
-  const World::BodyId anchor = world.createBody(0.0f, 1.0f);
-  world.body(anchor).position = Vec3(0.0f, 0.0f, 0.0f);
+  const World::RigidBodyId anchor = world.createRigidBody(0.0f, 1.0f);
+  world.rigidBody(anchor).position = Vec3(0.0f, 0.0f, 0.0f);
 
   for (int i = 0; i < steps; ++i) {
     world.step(dt);
   }
 
-  const RigidBody& body = world.body(falling);
+  const RigidBody& body = world.rigidBody(falling);
 
   std::cout << "headless_replay\n";
   std::cout << "steps: " << steps << '\n';
