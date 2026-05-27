@@ -99,6 +99,32 @@ explicit world-owned storage and deterministic step functions. Do not introduce
 a generic virtual module/plugin interface until multiple implemented domains
 show the shared stepping, ownership, testing, and benchmark requirements.
 
+## Shared Simulation Concepts Across Domains
+
+Decision: shared simulation concepts are handles, materials, contacts,
+constraints, integrators, and solver data. These names describe architecture
+boundaries, not a claim that every concept is implemented today.
+
+Context: Phase 3 needs to define which ideas should remain domain-neutral as
+the engine grows beyond rigid-body spheres. The current implementation has
+rigid-body handles and a simple body material. Contacts are still implicit in
+`World::resolveContact`, constraints are not implemented, and solver data has
+not been separated from collision response yet.
+
+Tradeoff: documenting these concepts early helps keep future features from
+landing in arbitrary places, especially material mixing, contact generation,
+constraint solving, and integration policy. The cost is that the project must
+avoid overbuilding empty abstractions before tests and benchmarks need them.
+
+Status: accepted as architecture guidance.
+
+Future direction: keep handles domain-specific until a shared handle model is
+justified by more than one owned domain. Move material mixing into named contact
+or material policy code when contact data becomes explicit. Represent contacts
+and constraints as compact solver-facing data before adding richer collision
+features. Keep integrators deterministic and benchmarkable, with ownership and
+allocation behavior visible at the world/domain boundary.
+
 ## Vec3 Scalar Division Policy
 
 Decision: `Vec3::operator/(float)` performs direct component-wise floating-point
