@@ -17,7 +17,7 @@ RigidBody& World::rigidBody(RigidBodyId id) {
   return m_bodies[id];
 }
 
-const RigidBody& World::body(RigidBodyId id) const {
+const RigidBody& World::rigidBody(RigidBodyId id) const {
   return m_bodies[id];
 }
 

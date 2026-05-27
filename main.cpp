@@ -19,7 +19,7 @@ constexpr float arenaMargin = 36.0f;
 constexpr std::size_t bodyCount = 30;
 
 struct RenderBody {
-  World::BodyId id;
+  World::RigidBodyId id;
   sf::Color color;
 };
 
@@ -58,7 +58,7 @@ DemoScene createScene() {
   for (std::size_t i = 0; i < bodyCount; ++i) {
     const float radius = 12.0f + static_cast<float>((i * 7) % 10);
     const float mass = 0.8f + static_cast<float>(i % 5) * 0.45f;
-    const World::BodyId id = scene.world.createBody(mass, radius);
+    const World::RigidBodyId id = scene.world.createRigidBody(mass, radius);
 
     RigidBody& body = scene.world.rigidBody(id);
     body.position = Vec3(startX + static_cast<float>(i % columns) * spacingX,
@@ -208,7 +208,7 @@ int main() {
     window.draw(arena);
 
     for (const RenderBody& renderBody : scene.bodies) {
-      const RigidBody& body = scene.world.body(renderBody.id);
+      const RigidBody& body = scene.world.rigidBody(renderBody.id);
       shape.setRadius(body.radius);
       shape.setOrigin(body.radius, body.radius);
       shape.setPosition(body.position.x, body.position.y);

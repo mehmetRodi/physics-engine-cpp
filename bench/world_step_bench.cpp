@@ -10,22 +10,22 @@
 namespace {
 World createWorld(std::size_t bodyCount) {
   World world(Vec3(0.f, -9.8f, 0.f));
-  world.reserveBodies(bodyCount);
+  world.reserveRigidBodies(bodyCount);
 
   for (std::size_t i = 0; i < bodyCount; ++i) {
-    const World::BodyId body = world.createBody(1.0f, 0.25f);
+    const World::RigidBodyId body = world.createRigidBody(1.0f, 0.25f);
 
     const float x = static_cast<float>(i % 64) * 2.0f;
     const float y = static_cast<float>(i / 64) * 2.0f;
 
-    world.body(body).position = Vec3(x, y, 0.f);
-    world.body(body).velocity = Vec3(0.1f, -0.2f, 0.f);
+    world.rigidBody(body).position = Vec3(x, y, 0.f);
+    world.rigidBody(body).velocity = Vec3(0.1f, -0.2f, 0.f);
   }
 
   return world;
 }
 
-double averageNanoseconds(const std::vector<std::uint64_t> &samples) {
+double averageNanoseconds(const std::vector<std::uint64_t>& samples) {
   std::uint64_t total = 0;
 
   for (const std::uint64_t sample : samples) {
@@ -35,10 +35,9 @@ double averageNanoseconds(const std::vector<std::uint64_t> &samples) {
   return static_cast<double>(total) / static_cast<double>(samples.size());
 }
 
-std::uint64_t percentileNanoseconds(const std::vector<std::uint64_t> &samples,
-                                    double percentile) {
-  const std::size_t index = static_cast<std::size_t>(
-      percentile * static_cast<double>(samples.size() - 1));
+std::uint64_t percentileNanoseconds(const std::vector<std::uint64_t>& samples, double percentile) {
+  const std::size_t index =
+      static_cast<std::size_t>(percentile * static_cast<double>(samples.size() - 1));
   return samples[index];
 }
 } // namespace
@@ -66,8 +65,7 @@ int main() {
     const auto end = std::chrono::steady_clock::now();
 
     const auto elapsedNanoseconds =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(end - start)
-            .count();
+        std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
     samples.push_back(static_cast<std::uint64_t>(elapsedNanoseconds));
   }

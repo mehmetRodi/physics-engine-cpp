@@ -17,7 +17,7 @@ public:
 
   RigidBodyId createRigidBody(float mass, float radius);
   RigidBody& rigidBody(RigidBodyId id);
-  const RigidBody& body(RigidBodyId id) const;
+  const RigidBody& rigidBody(RigidBodyId id) const;
   void reserveRigidBodies(std::size_t capacity);
 
   void step(float dt);
