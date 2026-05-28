@@ -20,8 +20,8 @@ The current implementation starts with rigid-body sphere simulation because it i
 
 ## Planned Work
 
-- Force accumulation, materials, restitution, friction, and damping policies
-- Broadphase collision with measured O(n^2) and sweep-and-prune variants
+- Friction policy and richer material-combine behavior
+- Additional broadphase evaluation only when measured workloads justify it
 - Constraint solving with documented convergence and latency behavior
 - Additional simulation domains only after the shared stepping, testing, and benchmarking model is clear
 - Camera/navigation and immersive inspection controls for visual demos, so simulations can be inspected at useful scales without coupling physics to rendering
