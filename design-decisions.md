@@ -267,6 +267,43 @@ float mixRestitution(const BodyMaterial& a, const BodyMaterial& b);
 That keeps `World` focused on simulation flow while contact generation prepares
 solver-ready data.
 
+## Collision Pipeline Stage Instrumentation
+
+Decision: add a dedicated `collision_pipeline_bench` that measures rigid-body
+collision stages separately while keeping timing code out of production
+`World::step`.
+
+Context: after adding scratch-backed sweep-and-prune, `World::step` benchmarks
+showed strong sparse/dense wins and a slower all-overlapping worst case. Before
+adding BVH, new broadphase structures, or more collision shapes, the project
+needs stage-level evidence showing where collision time is spent.
+
+Tradeoff: benchmark-only friend access exposes private `RigidBodySystem` stages
+to the benchmark target, which is less encapsulated than a public metrics API.
+The benefit is that production stepping stays simple and deterministic, and
+`std::chrono` timing does not become part of the core physics API or hot path.
+
+Current methodology: the benchmark uses 1024 static sphere bodies across three
+fixed distributions: sparse grid, dense grid, and all-overlapping. It reports
+AABB candidate count, generated contact count, AABB proxy build time,
+sweep-and-prune broadphase time, sphere narrowphase/contact-generation time,
+contact-resolution time, and total collision-pipeline time. The static-body
+setup isolates collision pipeline costs; contact resolution mostly measures the
+solver loop and static-body early-outs, not a full dynamic collision workload.
+
+Current result: sparse and dense scenes are dominated by broadphase work, while
+the all-overlapping case emits 523,776 AABB candidates, generates zero contacts
+because identical sphere centers are skipped as ambiguous, and spends most time
+in sweep-and-prune pair emission/order restoration plus narrowphase scanning.
+
+Status: accepted as the current profiling checkpoint.
+
+Future direction: do not add BVH solely because SAP is slow in the
+all-overlapping case. That scene is also pathological for tree broadphases.
+Revisit BVH only after representative workloads show broadphase cost that a
+tree can plausibly reduce, and keep before/after benchmark numbers alongside
+the change.
+
 ## Reserved Rigid-Body Step Allocation Policy
 
 Decision: `World::reserveRigidBodies(capacity)` preallocates current

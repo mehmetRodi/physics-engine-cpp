@@ -15,7 +15,7 @@ The current implementation starts with rigid-body sphere simulation because it i
 - **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
 - **AABB broadphase** — deterministic O(n^2) baseline plus scratch-backed x-axis sweep-and-prune in `World::step`
 - **Headless tests** — CTest/GoogleTest coverage for math, world stepping, deterministic replay, rigid bodies, and sphere collision
-- **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, AABB broadphase variants, and `World::step`
+- **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, AABB broadphase variants, collision pipeline stages, and `World::step`
 - **SFML debug demo** — visual rigid-body sphere scene with fixed-step controls, trails, contact highlights, static obstacles, and click-to-spawn bodies
 
 ## Planned Work
@@ -52,6 +52,11 @@ Current benchmark target:
 - `aabb_pair_bench`: measures the deterministic O(n^2) AABB baseline and a
   standalone x-axis sweep-and-prune broadphase across sparse, dense, and
   all-overlapping distributions at multiple body counts.
+- `collision_pipeline_bench`: measures the rigid-body collision pipeline stages
+  separately for 1024 static sphere bodies: AABB proxy build, sweep-and-prune
+  broadphase, sphere narrowphase/contact generation, and contact resolution.
+  The static-body setup isolates collision pipeline costs; it is not a full
+  dynamic solver workload.
 
 Initial local sample:
 
@@ -78,6 +83,12 @@ Initial local sample:
 | Sweep-and-prune x-axis | Dense grid      |   1024 |         38 |            3858 |  3430542 ns |       0.172359 ns |    90277.4 ns |
 | Sweep-and-prune x-axis | All overlapping |   1024 |         38 |          523776 | 88944042 ns |        4.46877 ns |    2340630 ns |
 
+| Collision pipeline distribution | Bodies | Candidate pairs | Contacts | AABB proxy build | Broadphase | Contact generation | Contact resolution | Total |
+| -------------------------------- | -----: | --------------: | -------: | ---------------: | ---------: | -----------------: | -----------------: | ----: |
+| Sparse grid                      |   1024 |               0 |        0 |        5288.9 ns | 40924.7 ns |          25.437 ns |          23.965 ns | 46263 ns |
+| Dense grid                       |   1024 |            3858 |     1968 |       3027.25 ns | 88773.7 ns |         8583.85 ns |         4149.25 ns | 104534 ns |
+| All overlapping                  |   1024 |          523776 |        0 |       3178.01 ns | 2.33876 ms |        652928 ns |          15.209 ns | 2.99488 ms |
+
 Interpretation: on the sparse 1024-body `World::step` workload, replacing the
 all-pairs broadphase with scratch-backed sweep-and-prune reduces average step
 time from the earlier 565306 ns dynamic-body sample to 42906.6 ns for the
@@ -85,6 +96,13 @@ current static-body sparse distribution. Dense scenes remain under 0.12 ms on
 average, while the all-overlapping worst case rises to about 3.25 ms because
 every broadphase pair is emitted and sorted before narrowphase rejects
 ambiguous identical-center sphere contacts.
+
+The collision-pipeline breakdown shows the same bottleneck more directly:
+sparse and dense scenes are dominated by broadphase work, while the
+all-overlapping worst case is dominated by sweep-and-prune pair emission/order
+restoration plus narrowphase scanning over every candidate pair. This does not
+yet justify a BVH; the pathological all-overlapping scene would also be hard
+for tree-based broadphase structures.
 
 Environment for the sample above:
 
@@ -218,6 +236,8 @@ cmake --build build-release --target sphere_pair_bench
 ./build-release/sphere_pair_bench
 cmake --build build-release --target aabb_pair_bench
 ./build-release/aabb_pair_bench
+cmake --build build-release --target collision_pipeline_bench
+./build-release/collision_pipeline_bench
 ```
 
 **Run tests:**
