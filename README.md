@@ -52,15 +52,20 @@ Initial local sample:
 
 | Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `World::step` | 1024 | 100 | 1000 | 647297 ns | 672542 ns | 683083 ns | 701583 ns |
+| `World::step` | 1024 | 100 | 1000 | 673437 ns | 725042 ns | 800166 ns | 827084 ns |
 
 | Benchmark | Operations | Total | Per operation |
 | --- | ---: | ---: | ---: |
-| `Vec3::dot` | 1000000 | 946584 ns | 0.946584 ns |
+| `Vec3::dot` | 1000000 | 766000 ns | 0.766 ns |
 
 | Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Sphere pair check | 1024 | 100 | 52377600 | 64217750 ns | 1.22605 ns |
+| Sphere pair check | 1024 | 100 | 52377600 | 67813375 ns | 1.2947 ns |
+
+Interpretation: at this scale, the standalone O(n^2) sphere-pair scan costs
+about the same per iteration as the full `World::step` benchmark. That means
+the current evidence points toward broadphase and collision-pipeline work before
+an AoS-to-SoA body-state migration.
 
 Environment for the sample above:
 

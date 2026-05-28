@@ -413,6 +413,33 @@ Future direction: when broadphase becomes a richer module, keep allocation
 behavior explicit. Consider preallocated pair storage, spans, or arena-backed
 buffers only after the simpler reusable-vector API has measured limitations.
 
+## Structure-Of-Arrays Migration Timing
+
+Decision: defer moving rigid-body hot state from the current `std::vector<RigidBody>`
+array-of-structs layout to structure-of-arrays storage until benchmarks show
+body-state iteration is a material bottleneck.
+
+Context: Phase 4 asks for data-oriented engine shape, but layout changes should
+follow measurement. A Release benchmark on Apple M4 with AppleClang 21.0.0
+measured `World::step` for 1024 bodies at about 673437 ns average, while the
+standalone naive sphere-pair benchmark performed the same 1024-body all-pairs
+scan at about 678134 ns per iteration. The current full-step benchmark is
+therefore dominated by O(n^2) pair scanning rather than by the body object
+layout.
+
+Tradeoff: keeping AoS storage is simple, readable, and compatible with the
+current public `RigidBody&` access API. It may leave integration-only cache
+efficiency on the table, but changing the layout now would add API and wrapper
+complexity without evidence that it improves the measured hot path.
+
+Status: accepted as a temporary policy. The current evidence does not justify a
+SoA migration for rigid-body state.
+
+Future direction: add focused integration, contact generation, and solver
+benchmarks as those systems mature. Revisit SoA when a benchmark isolates body
+state iteration as a significant cost or when public wrappers can be kept from
+hiding hot-path gather/scatter overhead.
+
 ## World Collision Pair Discovery
 
 Decision: `World::resolveCollisions` builds sphere proxies from the current body
