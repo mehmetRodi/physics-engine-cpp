@@ -1,5 +1,6 @@
 #pragma once
 
+#include "collision/AABBPair.hpp"
 #include "collision/SpherePair.hpp"
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
@@ -24,12 +25,14 @@ public:
 private:
   friend class RigidBodySystemTestAccess;
 
+  void buildAABBProxies();
   void buildSphereProxies();
   void resolveCollisions();
   void resolveContact(const RigidBodyContact& contact);
   void buildContacts();
 
   std::vector<RigidBody> m_bodies;
+  std::vector<AABBProxy> m_aabbProxies;
   std::vector<SphereProxy> m_sphereProxies;
   std::vector<CollisionPair> m_collisionPairs;
   std::vector<RigidBodyContact> m_contacts;

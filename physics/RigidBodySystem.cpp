@@ -1,5 +1,6 @@
 #include "physics/RigidBodySystem.hpp"
 
+#include "collision/AABB.hpp"
 #include "math/Vec3.hpp"
 #include "physics/RigidBody.hpp"
 
@@ -21,6 +22,7 @@ const RigidBody& RigidBodySystem::rigidBody(RigidBodyId id) const {
 
 void RigidBodySystem::reserveRigidBodies(std::size_t capacity) {
   m_bodies.reserve(capacity);
+  m_aabbProxies.reserve(capacity);
   m_sphereProxies.reserve(capacity);
   const std::size_t pairCapacity = capacity * (capacity - 1) / 2;
   m_collisionPairs.reserve(pairCapacity);
@@ -35,6 +37,16 @@ void RigidBodySystem::step(float dt, const Vec3& gravity) {
   resolveCollisions();
 }
 
+void RigidBodySystem::buildAABBProxies() {
+  m_aabbProxies.clear();
+  m_aabbProxies.reserve(m_bodies.size());
+
+  for (std::size_t i = 0; i < m_bodies.size(); ++i) {
+    const RigidBody& body = m_bodies[i];
+    m_aabbProxies.push_back({i, makeAABBForSphere(body.position, body.radius)});
+  }
+}
+
 void RigidBodySystem::buildSphereProxies() {
   m_sphereProxies.clear();
   m_sphereProxies.reserve(m_bodies.size());
@@ -46,6 +58,7 @@ void RigidBodySystem::buildSphereProxies() {
 }
 
 void RigidBodySystem::resolveCollisions() {
+  buildAABBProxies();
   buildSphereProxies();
   findSpherePairs(m_sphereProxies, m_collisionPairs);
   buildContacts();
