@@ -461,6 +461,32 @@ then compare optimized broadphase options against it. Keep the contact pipeline
 conservative: broadphase may over-report candidates, but it must not miss pairs
 that narrowphase should inspect.
 
+## Baseline AABB Broadphase Benchmark
+
+Decision: add `aabb_pair_bench` to measure the deterministic O(n^2) AABB
+broadphase across 128, 512, and 1024 bodies using sparse-grid, dense-grid, and
+all-overlapping distributions.
+
+Why now: Phase 5 needs a baseline before replacing the all-pairs broadphase with
+sweep-and-prune, BVH, or another spatial structure. Different distributions
+matter because sparse scenes mostly measure overlap predicate cost, while
+all-overlapping scenes also measure the cost of writing every candidate pair.
+
+Tradeoff: this benchmark is synthetic and measures broadphase candidate
+generation only. It does not include AABB proxy construction, sphere
+narrowphase, contact generation, or solver work. That narrow scope is useful
+for comparing broadphase algorithms, but it should not be presented as full
+simulation latency.
+
+Status: accepted as the current baseline broadphase benchmark. Initial Release
+samples on Apple M4 show sparse and dense 1024-body cases near 1.06-1.10 ns per
+pair check, while the all-overlapping 1024-body case is about 1.99 ns per pair
+check because every candidate pair is written.
+
+Future direction: keep the same body counts and distributions when evaluating
+optimized broadphase implementations. Add larger counts or distribution-specific
+workloads only when the benchmark runtime and memory behavior remain practical.
+
 ## Linear Damping Policy
 
 Decision: apply linear damping as a per-body material property during rigid-body

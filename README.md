@@ -38,15 +38,18 @@ made.
 Current benchmark target:
 
 - `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
-  bodies over a fixed timestep. This includes integration and the current
-  deterministic O(n^2) `findSpherePairs` scan, but mostly avoids collision
-  response.
+  bodies over a fixed timestep. This includes integration, AABB proxy creation,
+  the current deterministic O(n^2) AABB broadphase, sphere narrowphase contact
+  generation, and mostly avoids collision response.
 - `vec3_bench`: measures one million scalar `Vec3::dot` operations and reports
   total time plus nanoseconds per operation. The result is accumulated into a
   printed checksum so Release builds cannot optimize the loop away.
 - `sphere_pair_bench`: measures the current naive O(n^2) sphere overlap
   predicate separately from integration and collision response, using the
   reusable output-buffer pair-generation API.
+- `aabb_pair_bench`: measures the baseline deterministic O(n^2) AABB
+  broadphase across sparse, dense, and all-overlapping distributions at
+  multiple body counts.
 
 Initial local sample:
 
@@ -61,6 +64,18 @@ Initial local sample:
 | Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Sphere pair check | 1024 | 100 | 52377600 | 67813375 ns | 1.2947 ns |
+
+| AABB broadphase distribution | Bodies | Iterations | Candidate pairs | Total | Per pair check |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Sparse grid | 128 | 2460 | 0 | 39192250 ns | 1.96011 ns |
+| Dense grid | 128 | 2460 | 316 | 27289750 ns | 1.36484 ns |
+| All overlapping | 128 | 2460 | 8128 | 39908542 ns | 1.99594 ns |
+| Sparse grid | 512 | 152 | 0 | 21084083 ns | 1.06035 ns |
+| Dense grid | 512 | 152 | 1834 | 22055875 ns | 1.10923 ns |
+| All overlapping | 512 | 152 | 130816 | 38630584 ns | 1.94279 ns |
+| Sparse grid | 1024 | 38 | 0 | 21144166 ns | 1.06233 ns |
+| Dense grid | 1024 | 38 | 3858 | 21826750 ns | 1.09663 ns |
+| All overlapping | 1024 | 38 | 523776 | 39612792 ns | 1.99024 ns |
 
 Interpretation: at this scale, the standalone O(n^2) sphere-pair scan costs
 about the same per iteration as the full `World::step` benchmark. That means
@@ -196,6 +211,8 @@ cmake --build build-release --target vec3_bench
 ./build-release/vec3_bench
 cmake --build build-release --target sphere_pair_bench
 ./build-release/sphere_pair_bench
+cmake --build build-release --target aabb_pair_bench
+./build-release/aabb_pair_bench
 ```
 
 **Run tests:**
