@@ -23,9 +23,8 @@ const RigidBody& RigidBodySystem::rigidBody(RigidBodyId id) const {
 void RigidBodySystem::reserveRigidBodies(std::size_t capacity) {
   m_bodies.reserve(capacity);
   m_aabbProxies.reserve(capacity);
-  m_sphereProxies.reserve(capacity);
   const std::size_t pairCapacity = capacity * (capacity - 1) / 2;
-  m_collisionPairs.reserve(pairCapacity);
+  m_aabbPairs.reserve(pairCapacity);
   m_contacts.reserve(pairCapacity);
 }
 
@@ -47,20 +46,9 @@ void RigidBodySystem::buildAABBProxies() {
   }
 }
 
-void RigidBodySystem::buildSphereProxies() {
-  m_sphereProxies.clear();
-  m_sphereProxies.reserve(m_bodies.size());
-
-  for (std::size_t i = 0; i < m_bodies.size(); ++i) {
-    const RigidBody& body = m_bodies[i];
-    m_sphereProxies.push_back({i, body.position, body.radius});
-  }
-}
-
 void RigidBodySystem::resolveCollisions() {
   buildAABBProxies();
-  buildSphereProxies();
-  findSpherePairs(m_sphereProxies, m_collisionPairs);
+  findAABBPairs(m_aabbProxies, m_aabbPairs);
   buildContacts();
 
   for (const RigidBodyContact& contact : m_contacts) {
@@ -97,7 +85,7 @@ void RigidBodySystem::resolveContact(const RigidBodyContact& contact) {
 void RigidBodySystem::buildContacts() {
   m_contacts.clear();
 
-  for (const CollisionPair& pair : m_collisionPairs) {
+  for (const AABBPair& pair : m_aabbPairs) {
     const RigidBody& body1 = m_bodies[pair.a];
     const RigidBody& body2 = m_bodies[pair.b];
 

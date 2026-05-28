@@ -10,6 +10,10 @@ public:
     return system.m_aabbProxies;
   }
 
+  static const std::vector<AABBPair>& aabbPairs(const RigidBodySystem& system) {
+    return system.m_aabbPairs;
+  }
+
   static const std::vector<RigidBodyContact>& contacts(const RigidBodySystem& system) {
     return system.m_contacts;
   }
@@ -46,6 +50,27 @@ TEST(RigidBodyContactTests, BuildsAABBProxiesFromRigidBodySpheres) {
   EXPECT_FLOAT_EQ(proxies[1].bounds.max.x, 0.25f);
   EXPECT_FLOAT_EQ(proxies[1].bounds.max.y, 1.75f);
   EXPECT_FLOAT_EQ(proxies[1].bounds.max.z, 4.25f);
+}
+
+TEST(RigidBodyContactTests, AABBTouchingCandidatesCanBeFilteredBySphereNarrowphase) {
+  RigidBodySystem system;
+  system.reserveRigidBodies(2);
+
+  const RigidBodySystem::RigidBodyId body0 = system.createRigidBody(1.0f, 1.0f);
+  const RigidBodySystem::RigidBodyId body1 = system.createRigidBody(1.0f, 1.0f);
+
+  system.rigidBody(body0).position = Vec3(0.0f, 0.0f, 0.0f);
+  system.rigidBody(body1).position = Vec3(2.0f, 0.0f, 0.0f);
+
+  system.step(0.0f, Vec3(0.0f, 0.0f, 0.0f));
+
+  const std::vector<AABBPair>& broadphasePairs = RigidBodySystemTestAccess::aabbPairs(system);
+  const std::vector<RigidBodyContact>& contacts = RigidBodySystemTestAccess::contacts(system);
+
+  ASSERT_EQ(broadphasePairs.size(), 1u);
+  EXPECT_EQ(broadphasePairs[0].a, body0);
+  EXPECT_EQ(broadphasePairs[0].b, body1);
+  EXPECT_TRUE(contacts.empty());
 }
 
 TEST(RigidBodyContactTests, ContactsFollowCollisionPairOrder) {
