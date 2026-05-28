@@ -13,14 +13,15 @@ The current implementation starts with rigid-body sphere simulation because it i
 - **Scalar math primitives** — `Vec3` arithmetic, dot/cross products, length, and normalization tests
 - **Rigid-body sphere simulation** — world-owned bodies, fixed-step integration, and deterministic storage order
 - **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
+- **AABB broadphase candidates** — deterministic O(n^2) baseline plus a measured standalone x-axis sweep-and-prune variant
 - **Headless tests** — CTest/GoogleTest coverage for math, world stepping, deterministic replay, rigid bodies, and sphere collision
-- **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, and `World::step`
+- **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, AABB broadphase variants, and `World::step`
 - **SFML debug demo** — visual rigid-body sphere scene with fixed-step controls, trails, contact highlights, static obstacles, and click-to-spawn bodies
 
 ## Planned Work
 
 - Force accumulation, materials, restitution, friction, and damping policies
-- Broadphase collision with measured baseline and later optimized layouts
+- Broadphase collision with measured O(n^2) and sweep-and-prune variants
 - Constraint solving with documented convergence and latency behavior
 - Additional simulation domains only after the shared stepping, testing, and benchmarking model is clear
 - Camera/navigation and immersive inspection controls for visual demos, so simulations can be inspected at useful scales without coupling physics to rendering
@@ -47,41 +48,39 @@ Current benchmark target:
 - `sphere_pair_bench`: measures the current naive O(n^2) sphere overlap
   predicate separately from integration and collision response, using the
   reusable output-buffer pair-generation API.
-- `aabb_pair_bench`: measures the baseline deterministic O(n^2) AABB
-  broadphase across sparse, dense, and all-overlapping distributions at
-  multiple body counts.
+- `aabb_pair_bench`: measures the deterministic O(n^2) AABB baseline and a
+  standalone x-axis sweep-and-prune broadphase across sparse, dense, and
+  all-overlapping distributions at multiple body counts.
 
 Initial local sample:
 
-| Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `World::step` | 1024 | 100 | 1000 | 565306 ns | 601917 ns | 621791 ns | 742709 ns |
+| Benchmark     | Bodies | Warmup | Samples |       Avg |       p95 |       p99 |       Max |
+| ------------- | -----: | -----: | ------: | --------: | --------: | --------: | --------: |
+| `World::step` |   1024 |    100 |    1000 | 565306 ns | 601917 ns | 621791 ns | 742709 ns |
 
-| Benchmark | Operations | Total | Per operation |
-| --- | ---: | ---: | ---: |
-| `Vec3::dot` | 1000000 | 766000 ns | 0.766 ns |
+| Benchmark   | Operations |     Total | Per operation |
+| ----------- | ---------: | --------: | ------------: |
+| `Vec3::dot` |    1000000 | 766000 ns |      0.766 ns |
 
-| Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Sphere pair check | 1024 | 100 | 52377600 | 67440208 ns | 1.28758 ns |
+| Benchmark         | Bodies | Iterations | Pair checks |       Total | Per pair check |
+| ----------------- | -----: | ---------: | ----------: | ----------: | -------------: |
+| Sphere pair check |   1024 |        100 |    52377600 | 67440208 ns |     1.28758 ns |
 
-| AABB broadphase distribution | Bodies | Iterations | Candidate pairs | Total | Per pair check |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Sparse grid | 128 | 2460 | 0 | 39192250 ns | 1.96011 ns |
-| Dense grid | 128 | 2460 | 316 | 27289750 ns | 1.36484 ns |
-| All overlapping | 128 | 2460 | 8128 | 39908542 ns | 1.99594 ns |
-| Sparse grid | 512 | 152 | 0 | 21084083 ns | 1.06035 ns |
-| Dense grid | 512 | 152 | 1834 | 22055875 ns | 1.10923 ns |
-| All overlapping | 512 | 152 | 130816 | 38630584 ns | 1.94279 ns |
-| Sparse grid | 1024 | 38 | 0 | 21144166 ns | 1.06233 ns |
-| Dense grid | 1024 | 38 | 3858 | 21826750 ns | 1.09663 ns |
-| All overlapping | 1024 | 38 | 523776 | 39612792 ns | 1.99024 ns |
+| AABB broadphase method | Distribution    | Bodies | Iterations | Candidate pairs |       Total | Per possible pair | Per iteration |
+| ---------------------- | --------------- | -----: | ---------: | --------------: | ----------: | ----------------: | ------------: |
+| O(n^2) baseline        | Sparse grid     |   1024 |         38 |               0 | 20151042 ns |        1.01244 ns |     530291 ns |
+| O(n^2) baseline        | Dense grid      |   1024 |         38 |            3858 | 20883333 ns |        1.04923 ns |     549561 ns |
+| O(n^2) baseline        | All overlapping |   1024 |         38 |          523776 | 37416083 ns |        1.87988 ns |     984634 ns |
+| Sweep-and-prune x-axis | Sparse grid     |   1024 |         38 |               0 |   785791 ns |      0.0394801 ns |    20678.7 ns |
+| Sweep-and-prune x-axis | Dense grid      |   1024 |         38 |            3858 |  3227584 ns |       0.162162 ns |    84936.4 ns |
+| Sweep-and-prune x-axis | All overlapping |   1024 |         38 |          523776 | 97079833 ns |        4.87753 ns |    2554730 ns |
 
 Interpretation: at this scale, `World::step` is still dominated by the
-O(n^2) broadphase-style pair scan. The sparse 1024-body AABB broadphase case
-takes about 556 microseconds per iteration, close to the 565 microsecond
-`World::step` average, so current evidence still points toward broadphase and
-collision-pipeline work before an AoS-to-SoA body-state migration.
+O(n^2) broadphase-style pair scan because `World` has not yet switched to
+sweep-and-prune. The standalone sweep-and-prune benchmark is much faster for
+sparse and dense grid cases, but slower for the all-overlapping worst case
+because every candidate pair is still emitted and the current implementation
+sorts candidates to preserve baseline deterministic order.
 
 Environment for the sample above:
 
@@ -115,6 +114,7 @@ physics_engine/
 
 Planned design direction:
 
+- **Broadphase scratch storage** — caller-owned buffers or a broadphase object before sweep-and-prune is used in the no-allocation `World::step` hot path
 - **SoA layout** in broadphase — positions and AABBs stored in separate arrays to maximise cache line utilisation during BVH traversal, once profiling justifies the layout
 - **AVX2 SIMD** for Vec3 batch operations — explicit intrinsics only after scalar code is correct and measured
 - **No heap allocations on the hot path** — physics storage should be reserved or pre-allocated before simulation steps where practical
@@ -263,7 +263,9 @@ git ls-files 'math/*.cpp' 'physics/*.cpp' 'collision/*.cpp' 'bench/*.cpp' | xarg
 - [x] Rigid-body sphere integration with fixed timestep
 - [ ] Particle simulation module
 - [x] SFML debug renderer
-- [ ] BVH broadphase with SoA layout
+- [x] Standalone sweep-and-prune broadphase benchmark
+- [ ] Reusable no-allocation broadphase scratch storage
+- [ ] BVH broadphase if SAP measurements justify tree-building complexity
 - [ ] GJK + EPA narrowphase
 - [ ] Sequential impulse constraint solver
 - [ ] AVX2 SIMD math pass

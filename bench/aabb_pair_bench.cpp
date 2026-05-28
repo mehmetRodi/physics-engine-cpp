@@ -19,6 +19,22 @@ enum class Distribution {
   AllOverlapping,
 };
 
+enum class Method {
+  Baseline,
+  SweepAndPrune,
+};
+
+std::string_view methodName(Method method) {
+  switch (method) {
+  case Method::Baseline:
+    return "baseline_o_n2";
+  case Method::SweepAndPrune:
+    return "sweep_and_prune_x_axis";
+  }
+
+  return "unknown";
+}
+
 std::string_view distributionName(Distribution distribution) {
   switch (distribution) {
   case Distribution::SparseGrid:
@@ -63,20 +79,32 @@ int iterationsForBodyCount(std::size_t bodyCount) {
   return std::max(1, static_cast<int>(targetPairChecks / pairChecks));
 }
 
-void runCase(std::size_t bodyCount, Distribution distribution) {
+void findPairs(Method method, const std::vector<AABBProxy>& proxies,
+               std::vector<AABBPair>& pairs) {
+  switch (method) {
+  case Method::Baseline:
+    findAABBPairs(proxies, pairs);
+    return;
+  case Method::SweepAndPrune:
+    findAABBPairsSweepAndPrune(proxies, pairs);
+    return;
+  }
+}
+
+void runCase(Method method, std::size_t bodyCount, Distribution distribution) {
   const std::vector<AABBProxy> proxies = createAABBProxies(bodyCount, distribution);
-  const std::size_t pairChecksPerIteration = pairChecksForBodyCount(bodyCount);
+  const std::size_t possiblePairsPerIteration = pairChecksForBodyCount(bodyCount);
   const int iterations = iterationsForBodyCount(bodyCount);
 
   std::vector<AABBPair> pairs;
-  pairs.reserve(pairChecksPerIteration);
+  pairs.reserve(possiblePairsPerIteration);
 
   std::size_t checksum = 0;
 
   const auto start = Clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-    findAABBPairs(proxies, pairs);
+    findPairs(method, proxies, pairs);
     checksum += pairs.size();
   }
 
@@ -85,18 +113,22 @@ void runCase(std::size_t bodyCount, Distribution distribution) {
   const auto totalNanoseconds =
       std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-  const std::size_t totalPairChecks = pairChecksPerIteration * iterations;
-  const double nanosecondsPerPairCheck = static_cast<double>(totalNanoseconds) /
-                                         static_cast<double>(totalPairChecks);
+  const std::size_t totalPossiblePairs = possiblePairsPerIteration * iterations;
+  const double nanosecondsPerPossiblePair =
+      static_cast<double>(totalNanoseconds) / static_cast<double>(totalPossiblePairs);
+  const double nanosecondsPerIteration =
+      static_cast<double>(totalNanoseconds) / static_cast<double>(iterations);
 
+  std::cout << "method: " << methodName(method) << '\n';
   std::cout << "case: " << distributionName(distribution) << '\n';
   std::cout << "body_count: " << bodyCount << '\n';
   std::cout << "iterations: " << iterations << '\n';
-  std::cout << "pair_checks_per_iteration: " << pairChecksPerIteration << '\n';
-  std::cout << "total_pair_checks: " << totalPairChecks << '\n';
+  std::cout << "possible_pairs_per_iteration: " << possiblePairsPerIteration << '\n';
+  std::cout << "total_possible_pairs: " << totalPossiblePairs << '\n';
   std::cout << "last_candidate_pairs: " << pairs.size() << '\n';
   std::cout << "total_ns: " << totalNanoseconds << '\n';
-  std::cout << "ns_per_pair_check: " << nanosecondsPerPairCheck << '\n';
+  std::cout << "ns_per_possible_pair: " << nanosecondsPerPossiblePair << '\n';
+  std::cout << "ns_per_iteration: " << nanosecondsPerIteration << '\n';
   std::cout << "checksum: " << checksum << '\n';
   std::cout << '\n';
 }
@@ -109,13 +141,19 @@ int main() {
       Distribution::DenseGrid,
       Distribution::AllOverlapping,
   };
+  constexpr std::array<Method, 2> methods = {
+      Method::Baseline,
+      Method::SweepAndPrune,
+  };
 
-  std::cout << "AABB broadphase baseline benchmark\n";
-  std::cout << "method: deterministic O(n^2) all-pairs AABB overlap scan\n\n";
+  std::cout << "AABB broadphase benchmark\n";
+  std::cout << "methods: deterministic O(n^2) baseline and x-axis sweep-and-prune\n\n";
 
-  for (const std::size_t bodyCount : bodyCounts) {
-    for (const Distribution distribution : distributions) {
-      runCase(bodyCount, distribution);
+  for (const Method method : methods) {
+    for (const std::size_t bodyCount : bodyCounts) {
+      for (const Distribution distribution : distributions) {
+        runCase(method, bodyCount, distribution);
+      }
     }
   }
 

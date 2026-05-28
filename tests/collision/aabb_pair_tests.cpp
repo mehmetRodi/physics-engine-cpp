@@ -2,7 +2,19 @@
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <vector>
+
+namespace {
+void expectPairsEqual(const std::vector<AABBPair>& actual, const std::vector<AABBPair>& expected) {
+  ASSERT_EQ(actual.size(), expected.size());
+
+  for (std::size_t i = 0; i < expected.size(); ++i) {
+    EXPECT_EQ(actual[i].a, expected[i].a);
+    EXPECT_EQ(actual[i].b, expected[i].b);
+  }
+}
+} // namespace
 
 TEST(AABBPairTests, SeparatedProxiesProduceNoPairs) {
   const std::vector<AABBProxy> proxies = {
@@ -13,6 +25,15 @@ TEST(AABBPairTests, SeparatedProxiesProduceNoPairs) {
   const std::vector<AABBPair> pairs = findAABBPairs(proxies);
 
   EXPECT_TRUE(pairs.empty());
+}
+
+TEST(AABBPairTests, SweepAndPruneMatchesBaselineForSeparatedProxies) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
+      {1, {Vec3(2.f, 2.f, 2.f), Vec3(3.f, 3.f, 3.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsSweepAndPrune(proxies), findAABBPairs(proxies));
 }
 
 TEST(AABBPairTests, OverlappingProxiesProduceOnePair) {
@@ -28,6 +49,15 @@ TEST(AABBPairTests, OverlappingProxiesProduceOnePair) {
   EXPECT_EQ(pairs[0].b, 1u);
 }
 
+TEST(AABBPairTests, SweepAndPruneMatchesBaselineForOverlappingProxies) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(2.f, 2.f, 2.f)}},
+      {1, {Vec3(1.f, 1.f, 1.f), Vec3(3.f, 3.f, 3.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsSweepAndPrune(proxies), findAABBPairs(proxies));
+}
+
 TEST(AABBPairTests, TouchingProxiesProduceOnePair) {
   const std::vector<AABBProxy> proxies = {
       {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
@@ -39,6 +69,15 @@ TEST(AABBPairTests, TouchingProxiesProduceOnePair) {
   ASSERT_EQ(pairs.size(), 1u);
   EXPECT_EQ(pairs[0].a, 0u);
   EXPECT_EQ(pairs[0].b, 1u);
+}
+
+TEST(AABBPairTests, SweepAndPruneMatchesBaselineForTouchingProxies) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
+      {1, {Vec3(1.f, 0.f, 0.f), Vec3(2.f, 1.f, 1.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsSweepAndPrune(proxies), findAABBPairs(proxies));
 }
 
 TEST(AABBPairTests, PairOrderIsDeterministic) {
@@ -62,6 +101,18 @@ TEST(AABBPairTests, PairOrderIsDeterministic) {
   EXPECT_EQ(pairs[2].b, 30u);
 }
 
+TEST(AABBPairTests, SweepAndPruneMatchesBaselineOrderForMixedProxies) {
+  const std::vector<AABBProxy> proxies = {
+      {10, {Vec3(4.f, 0.f, 0.f), Vec3(6.f, 2.f, 2.f)}},
+      {20, {Vec3(0.f, 0.f, 0.f), Vec3(2.f, 2.f, 2.f)}},
+      {30, {Vec3(1.f, 1.f, 0.f), Vec3(3.f, 3.f, 2.f)}},
+      {40, {Vec3(5.f, 1.f, 0.f), Vec3(7.f, 3.f, 2.f)}},
+      {50, {Vec3(8.f, 8.f, 0.f), Vec3(9.f, 9.f, 1.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsSweepAndPrune(proxies), findAABBPairs(proxies));
+}
+
 TEST(AABBPairTests, OutputVectorOverloadClearsPreviousContents) {
   const std::vector<AABBProxy> proxies = {
       {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
@@ -70,6 +121,18 @@ TEST(AABBPairTests, OutputVectorOverloadClearsPreviousContents) {
 
   std::vector<AABBPair> pairs = {{100, 200}};
   findAABBPairs(proxies, pairs);
+
+  EXPECT_TRUE(pairs.empty());
+}
+
+TEST(AABBPairTests, SweepAndPruneOutputVectorOverloadClearsPreviousContents) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
+      {1, {Vec3(3.f, 3.f, 3.f), Vec3(4.f, 4.f, 4.f)}},
+  };
+
+  std::vector<AABBPair> pairs = {{100, 200}};
+  findAABBPairsSweepAndPrune(proxies, pairs);
 
   EXPECT_TRUE(pairs.empty());
 }

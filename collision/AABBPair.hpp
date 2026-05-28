@@ -19,3 +19,9 @@ void findAABBPairs(const std::vector<AABBProxy>& proxies,
                    std::vector<AABBPair>& outPairs);
 
 std::vector<AABBPair> findAABBPairs(const std::vector<AABBProxy>& proxies);
+
+void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
+                                std::vector<AABBPair>& outPairs);
+
+std::vector<AABBPair>
+findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies);
