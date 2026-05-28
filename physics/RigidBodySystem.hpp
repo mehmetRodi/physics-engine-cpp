@@ -9,6 +9,7 @@
 #include <vector>
 
 class RigidBodySystemTestAccess;
+class RigidBodySystemInstrumentationAccess;
 
 struct RigidBodyCollisionPipelineStats {
   std::size_t bodyCount = 0;
@@ -30,6 +31,7 @@ public:
 
 private:
   friend class RigidBodySystemTestAccess;
+  friend class RigidBodySystemInstrumentationAccess;
 
   void buildAABBProxies();
   void resolveCollisions();

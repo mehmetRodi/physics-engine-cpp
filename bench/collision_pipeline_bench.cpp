@@ -5,6 +5,28 @@
 #include <iostream>
 #include <string_view>
 
+class RigidBodySystemInstrumentationAccess {
+public:
+  static void buildAABBProxies(RigidBodySystem& system) {
+    system.buildAABBProxies();
+  }
+
+  static void findAABBPairs(RigidBodySystem& system) {
+    findAABBPairsSweepAndPrune(system.m_aabbProxies, system.m_aabbSweepScratch,
+                               system.m_aabbPairs);
+  }
+
+  static void buildContacts(RigidBodySystem& system) {
+    system.buildContacts();
+  }
+
+  static void resolveContacts(RigidBodySystem& system) {
+    for (const RigidBodyContact& contact : system.m_contacts) {
+      system.resolveContact(contact);
+    }
+  }
+};
+
 namespace {
 enum class Distribution {
   SparseGrid,
