@@ -80,13 +80,14 @@ int iterationsForBodyCount(std::size_t bodyCount) {
 }
 
 void findPairs(Method method, const std::vector<AABBProxy>& proxies,
+               AABBSweepAndPruneScratch& sweepScratch,
                std::vector<AABBPair>& pairs) {
   switch (method) {
   case Method::Baseline:
     findAABBPairs(proxies, pairs);
     return;
   case Method::SweepAndPrune:
-    findAABBPairsSweepAndPrune(proxies, pairs);
+    findAABBPairsSweepAndPrune(proxies, sweepScratch, pairs);
     return;
   }
 }
@@ -99,12 +100,15 @@ void runCase(Method method, std::size_t bodyCount, Distribution distribution) {
   std::vector<AABBPair> pairs;
   pairs.reserve(possiblePairsPerIteration);
 
+  AABBSweepAndPruneScratch sweepScratch;
+  sweepScratch.reserve(bodyCount);
+
   std::size_t checksum = 0;
 
   const auto start = Clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-    findPairs(method, proxies, pairs);
+    findPairs(method, proxies, sweepScratch, pairs);
     checksum += pairs.size();
   }
 

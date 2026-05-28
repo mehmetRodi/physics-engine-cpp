@@ -13,7 +13,7 @@ The current implementation starts with rigid-body sphere simulation because it i
 - **Scalar math primitives** — `Vec3` arithmetic, dot/cross products, length, and normalization tests
 - **Rigid-body sphere simulation** — world-owned bodies, fixed-step integration, and deterministic storage order
 - **Sphere collision baseline** — narrowphase pair checks and simple collision response for spheres
-- **AABB broadphase candidates** — deterministic O(n^2) baseline plus a measured standalone x-axis sweep-and-prune variant
+- **AABB broadphase** — deterministic O(n^2) baseline plus scratch-backed x-axis sweep-and-prune in `World::step`
 - **Headless tests** — CTest/GoogleTest coverage for math, world stepping, deterministic replay, rigid bodies, and sphere collision
 - **Benchmark harnesses** — in-repo `std::chrono` benchmarks for `Vec3`, sphere pair checks, AABB broadphase variants, and `World::step`
 - **SFML debug demo** — visual rigid-body sphere scene with fixed-step controls, trails, contact highlights, static obstacles, and click-to-spawn bodies
@@ -40,8 +40,8 @@ Current benchmark target:
 
 - `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
   bodies over a fixed timestep. This includes integration, AABB proxy creation,
-  the current deterministic O(n^2) AABB broadphase, sphere narrowphase contact
-  generation, and mostly avoids collision response.
+  the current scratch-backed x-axis sweep-and-prune AABB broadphase, sphere
+  narrowphase contact generation, and mostly avoids collision response.
 - `vec3_bench`: measures one million scalar `Vec3::dot` operations and reports
   total time plus nanoseconds per operation. The result is accumulated into a
   printed checksum so Release builds cannot optimize the loop away.
@@ -56,7 +56,7 @@ Initial local sample:
 
 | Benchmark     | Bodies | Warmup | Samples |       Avg |       p95 |       p99 |       Max |
 | ------------- | -----: | -----: | ------: | --------: | --------: | --------: | --------: |
-| `World::step` |   1024 |    100 |    1000 | 565306 ns | 601917 ns | 621791 ns | 742709 ns |
+| `World::step` |   1024 |    100 |    1000 | 60727.5 ns | 93125 ns | 100458 ns | 185375 ns |
 
 | Benchmark   | Operations |     Total | Per operation |
 | ----------- | ---------: | --------: | ------------: |
@@ -68,19 +68,20 @@ Initial local sample:
 
 | AABB broadphase method | Distribution    | Bodies | Iterations | Candidate pairs |       Total | Per possible pair | Per iteration |
 | ---------------------- | --------------- | -----: | ---------: | --------------: | ----------: | ----------------: | ------------: |
-| O(n^2) baseline        | Sparse grid     |   1024 |         38 |               0 | 20151042 ns |        1.01244 ns |     530291 ns |
-| O(n^2) baseline        | Dense grid      |   1024 |         38 |            3858 | 20883333 ns |        1.04923 ns |     549561 ns |
-| O(n^2) baseline        | All overlapping |   1024 |         38 |          523776 | 37416083 ns |        1.87988 ns |     984634 ns |
-| Sweep-and-prune x-axis | Sparse grid     |   1024 |         38 |               0 |   785791 ns |      0.0394801 ns |    20678.7 ns |
-| Sweep-and-prune x-axis | Dense grid      |   1024 |         38 |            3858 |  3227584 ns |       0.162162 ns |    84936.4 ns |
-| Sweep-and-prune x-axis | All overlapping |   1024 |         38 |          523776 | 97079833 ns |        4.87753 ns |    2554730 ns |
+| O(n^2) baseline        | Sparse grid     |   1024 |         38 |               0 | 20759875 ns |        1.04303 ns |     546312 ns |
+| O(n^2) baseline        | Dense grid      |   1024 |         38 |            3858 | 21973333 ns |        1.10399 ns |     578246 ns |
+| O(n^2) baseline        | All overlapping |   1024 |         38 |          523776 | 38847000 ns |        1.95177 ns |    1022290 ns |
+| Sweep-and-prune x-axis | Sparse grid     |   1024 |         38 |               0 |   899875 ns |      0.0452119 ns |    23680.9 ns |
+| Sweep-and-prune x-axis | Dense grid      |   1024 |         38 |            3858 |  3430542 ns |       0.172359 ns |    90277.4 ns |
+| Sweep-and-prune x-axis | All overlapping |   1024 |         38 |          523776 | 88944042 ns |        4.46877 ns |    2340630 ns |
 
-Interpretation: at this scale, `World::step` is still dominated by the
-O(n^2) broadphase-style pair scan because `World` has not yet switched to
-sweep-and-prune. The standalone sweep-and-prune benchmark is much faster for
-sparse and dense grid cases, but slower for the all-overlapping worst case
-because every candidate pair is still emitted and the current implementation
-sorts candidates to preserve baseline deterministic order.
+Interpretation: on the sparse 1024-body `World::step` workload, replacing the
+all-pairs broadphase with scratch-backed sweep-and-prune reduces average step
+time from the earlier 565306 ns sample to 60727.5 ns. The standalone
+sweep-and-prune benchmark is much faster for sparse and dense grid cases, but
+slower for the all-overlapping worst case because every candidate pair is still
+emitted and the current implementation sorts candidates to preserve baseline
+deterministic order.
 
 Environment for the sample above:
 
@@ -114,7 +115,7 @@ physics_engine/
 
 Planned design direction:
 
-- **Broadphase scratch storage** — caller-owned buffers or a broadphase object before sweep-and-prune is used in the no-allocation `World::step` hot path
+- **Broadphase scratch storage** — caller-owned buffers keep sweep-and-prune usable in the no-allocation `World::step` hot path
 - **SoA layout** in broadphase — positions and AABBs stored in separate arrays to maximise cache line utilisation during BVH traversal, once profiling justifies the layout
 - **AVX2 SIMD** for Vec3 batch operations — explicit intrinsics only after scalar code is correct and measured
 - **No heap allocations on the hot path** — physics storage should be reserved or pre-allocated before simulation steps where practical
@@ -264,7 +265,7 @@ git ls-files 'math/*.cpp' 'physics/*.cpp' 'collision/*.cpp' 'bench/*.cpp' | xarg
 - [ ] Particle simulation module
 - [x] SFML debug renderer
 - [x] Standalone sweep-and-prune broadphase benchmark
-- [ ] Reusable no-allocation broadphase scratch storage
+- [x] Reusable no-allocation broadphase scratch storage
 - [ ] BVH broadphase if SAP measurements justify tree-building complexity
 - [ ] GJK + EPA narrowphase
 - [ ] Sequential impulse constraint solver

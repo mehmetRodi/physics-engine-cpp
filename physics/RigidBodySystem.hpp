@@ -32,5 +32,6 @@ private:
   std::vector<RigidBody> m_bodies;
   std::vector<AABBProxy> m_aabbProxies;
   std::vector<AABBPair> m_aabbPairs;
+  AABBSweepAndPruneScratch m_aabbSweepScratch;
   std::vector<RigidBodyContact> m_contacts;
 };

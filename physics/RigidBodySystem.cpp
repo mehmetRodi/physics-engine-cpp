@@ -25,6 +25,7 @@ void RigidBodySystem::reserveRigidBodies(std::size_t capacity) {
   m_aabbProxies.reserve(capacity);
   const std::size_t pairCapacity = capacity * (capacity - 1) / 2;
   m_aabbPairs.reserve(pairCapacity);
+  m_aabbSweepScratch.reserve(capacity);
   m_contacts.reserve(pairCapacity);
 }
 
@@ -48,7 +49,7 @@ void RigidBodySystem::buildAABBProxies() {
 
 void RigidBodySystem::resolveCollisions() {
   buildAABBProxies();
-  findAABBPairs(m_aabbProxies, m_aabbPairs);
+  findAABBPairsSweepAndPrune(m_aabbProxies, m_aabbSweepScratch, m_aabbPairs);
   buildContacts();
 
   for (const RigidBodyContact& contact : m_contacts) {

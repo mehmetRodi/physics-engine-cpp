@@ -489,11 +489,12 @@ workloads only when the benchmark runtime and memory behavior remain practical.
 
 ## Sweep-And-Prune AABB Broadphase
 
-Decision: add an x-axis sweep-and-prune AABB broadphase as a standalone
-alternative to the deterministic O(n^2) baseline. The implementation sorts
-proxy indices by `bounds.min.x`, scans forward until the candidate minimum x is
-past the current maximum x, then runs the existing full AABB overlap check
-before emitting a candidate pair.
+Decision: add an x-axis sweep-and-prune AABB broadphase as an alternative to
+the deterministic O(n^2) baseline, then integrate it into `RigidBodySystem`
+using caller-owned scratch storage. The implementation sorts proxy indices by
+`bounds.min.x`, scans forward until the candidate minimum x is past the current
+maximum x, then runs the existing full AABB overlap check before emitting a
+candidate pair.
 
 Why now: Phase 5 needs a measured optimized broadphase before choosing whether
 to replace the world collision path. Sweep-and-prune is the smallest useful next
@@ -501,26 +502,28 @@ step after the all-pairs baseline because it works with the existing flat
 `std::vector<AABBProxy>` input and is easier to test than a BVH.
 
 Tradeoff: contact order is part of deterministic behavior, so the current
-standalone implementation sorts emitted candidates back into baseline proxy
-order. This makes SAP directly comparable to `findAABBPairs`, but it adds extra
-candidate storage and sorting cost. The function also allocates temporary
-scratch vectors internally, so it is not yet suitable for the reserved
-`World::step` no-allocation hot path.
+implementation sorts emitted candidates back into baseline proxy order. This
+makes SAP directly comparable to `findAABBPairs`, but it adds extra candidate
+storage and sorting cost. The convenience overload still allocates temporary
+scratch vectors, while the scratch-backed overload is used by `RigidBodySystem`
+to preserve the reserved `World::step` no-allocation hot path.
 
-Status: accepted as a measured standalone broadphase candidate, not yet as the
-world broadphase. Release samples on Apple M4 show the 1024-body sparse grid
-case improving from about 530291 ns per iteration to about 20679 ns per
-iteration, and the 1024-body dense grid case improving from about 549561 ns to
-about 84936 ns. The all-overlapping 1024-body case regresses from about
-984634 ns to about 2554730 ns because every candidate pair is still emitted
-and the order-preserving candidate sort adds work.
+Status: accepted as the current rigid-body broadphase. The no-allocation
+`World::step` test passes with scratch-backed SAP. Release samples on Apple M4
+show the 1024-body sparse-grid standalone broadphase case improving from about
+546312 ns per iteration to about 23681 ns per iteration, and the 1024-body
+dense-grid case improving from about 578246 ns to about 90277 ns. The
+all-overlapping 1024-body standalone case regresses from about 1022290 ns to
+about 2340630 ns because every candidate pair is still emitted and the
+order-preserving candidate sort adds work. On the sparse 1024-body
+`World::step` benchmark, average step latency improved from the earlier 565306
+ns sample to 60727.5 ns after integrating scratch-backed SAP.
 
-Future direction: add caller-owned scratch storage or a broadphase object before
-integrating SAP into `RigidBodySystem`, then rerun the no-allocation test and
-`World::step` benchmark. Keep the O(n^2) baseline for correctness comparison
-and worst-case reference. Evaluate BVH only after SAP's measured tradeoffs are
-documented against workloads that justify the additional tree-building
-complexity.
+Future direction: keep the O(n^2) baseline for correctness comparison and
+worst-case reference. Add more `World::step` distributions, especially dense
+and all-overlapping scenes, before claiming broadphase performance broadly.
+Evaluate BVH only after SAP's measured tradeoffs are documented against
+workloads that justify the additional tree-building complexity.
 
 ## Linear Damping Policy
 
