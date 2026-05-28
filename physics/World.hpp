@@ -19,6 +19,7 @@ public:
   RigidBody& rigidBody(RigidBodyId id);
   const RigidBody& rigidBody(RigidBodyId id) const;
   void reserveRigidBodies(std::size_t capacity);
+  RigidBodyCollisionPipelineStats collisionPipelineStats() const;
 
   // Advances one deterministic simulation tick. Callers own frame-time
   // accumulation and should pass a fixed dt for replayable simulation.

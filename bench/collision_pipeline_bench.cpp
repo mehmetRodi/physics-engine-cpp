@@ -51,7 +51,16 @@ World createWorld(std::size_t bodyCount, Distribution distribution) {
 void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
              int measuredSteps, float dt) {
   World world = createWorld(bodyCount, distribution);
-  (void)world;
+
+  for (int i = 0; i < warmupSteps; ++i) {
+    world.step(dt);
+  }
+
+  RigidBodyCollisionPipelineStats stats;
+  for (int i = 0; i < measuredSteps; ++i) {
+    world.step(dt);
+    stats = world.collisionPipelineStats();
+  }
 
   std::cout << "Collision pipeline benchmark\n";
   std::cout << "distribution: " << distributionName(distribution) << '\n';
@@ -59,6 +68,9 @@ void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
   std::cout << "warmup_steps: " << warmupSteps << '\n';
   std::cout << "measured_steps: " << measuredSteps << '\n';
   std::cout << "dt: " << dt << '\n';
+  std::cout << "last_stats_body_count: " << stats.bodyCount << '\n';
+  std::cout << "last_aabb_candidate_pairs: " << stats.aabbCandidatePairCount << '\n';
+  std::cout << "last_contacts: " << stats.contactCount << '\n';
   std::cout << '\n';
 }
 } // namespace

@@ -10,6 +10,12 @@
 
 class RigidBodySystemTestAccess;
 
+struct RigidBodyCollisionPipelineStats {
+  std::size_t bodyCount = 0;
+  std::size_t aabbCandidatePairCount = 0;
+  std::size_t contactCount = 0;
+};
+
 class RigidBodySystem {
 public:
   using RigidBodyId = std::size_t;
@@ -18,6 +24,7 @@ public:
   RigidBody& rigidBody(RigidBodyId id);
   const RigidBody& rigidBody(RigidBodyId id) const;
   void reserveRigidBodies(std::size_t capacity);
+  RigidBodyCollisionPipelineStats collisionPipelineStats() const;
 
   void step(float dt, const Vec3& gravity);
 

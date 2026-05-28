@@ -29,6 +29,14 @@ void RigidBodySystem::reserveRigidBodies(std::size_t capacity) {
   m_contacts.reserve(pairCapacity);
 }
 
+RigidBodyCollisionPipelineStats RigidBodySystem::collisionPipelineStats() const {
+  return {
+      m_bodies.size(),
+      m_aabbPairs.size(),
+      m_contacts.size(),
+  };
+}
+
 void RigidBodySystem::step(float dt, const Vec3& gravity) {
   for (RigidBody& body : m_bodies) {
     body.applyForce(gravity * body.mass);

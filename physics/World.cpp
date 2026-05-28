@@ -18,6 +18,10 @@ void World::reserveRigidBodies(std::size_t capacity) {
   m_rigidBodySystem.reserveRigidBodies(capacity);
 }
 
+RigidBodyCollisionPipelineStats World::collisionPipelineStats() const {
+  return m_rigidBodySystem.collisionPipelineStats();
+}
+
 void World::step(float dt) {
   m_rigidBodySystem.step(dt, m_gravity);
 }
