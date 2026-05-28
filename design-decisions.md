@@ -421,10 +421,10 @@ body-state iteration is a material bottleneck.
 
 Context: Phase 4 asks for data-oriented engine shape, but layout changes should
 follow measurement. A Release benchmark on Apple M4 with AppleClang 21.0.0
-measured `World::step` for 1024 bodies at about 673437 ns average, while the
-standalone naive sphere-pair benchmark performed the same 1024-body all-pairs
-scan at about 678134 ns per iteration. The current full-step benchmark is
-therefore dominated by O(n^2) pair scanning rather than by the body object
+measured `World::step` for 1024 bodies at about 565306 ns average after the
+AABB broadphase baseline was introduced. The sparse 1024-body AABB broadphase
+case takes about 556426 ns per iteration. The current full-step benchmark is
+therefore still dominated by O(n^2) pair scanning rather than by the body object
 layout.
 
 Tradeoff: keeping AoS storage is simple, readable, and compatible with the

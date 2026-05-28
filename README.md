@@ -55,7 +55,7 @@ Initial local sample:
 
 | Benchmark | Bodies | Warmup | Samples | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `World::step` | 1024 | 100 | 1000 | 673437 ns | 725042 ns | 800166 ns | 827084 ns |
+| `World::step` | 1024 | 100 | 1000 | 565306 ns | 601917 ns | 621791 ns | 742709 ns |
 
 | Benchmark | Operations | Total | Per operation |
 | --- | ---: | ---: | ---: |
@@ -63,7 +63,7 @@ Initial local sample:
 
 | Benchmark | Bodies | Iterations | Pair checks | Total | Per pair check |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Sphere pair check | 1024 | 100 | 52377600 | 67813375 ns | 1.2947 ns |
+| Sphere pair check | 1024 | 100 | 52377600 | 67440208 ns | 1.28758 ns |
 
 | AABB broadphase distribution | Bodies | Iterations | Candidate pairs | Total | Per pair check |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -77,10 +77,11 @@ Initial local sample:
 | Dense grid | 1024 | 38 | 3858 | 21826750 ns | 1.09663 ns |
 | All overlapping | 1024 | 38 | 523776 | 39612792 ns | 1.99024 ns |
 
-Interpretation: at this scale, the standalone O(n^2) sphere-pair scan costs
-about the same per iteration as the full `World::step` benchmark. That means
-the current evidence points toward broadphase and collision-pipeline work before
-an AoS-to-SoA body-state migration.
+Interpretation: at this scale, `World::step` is still dominated by the
+O(n^2) broadphase-style pair scan. The sparse 1024-body AABB broadphase case
+takes about 556 microseconds per iteration, close to the 565 microsecond
+`World::step` average, so current evidence still points toward broadphase and
+collision-pipeline work before an AoS-to-SoA body-state migration.
 
 Environment for the sample above:
 
