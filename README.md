@@ -38,10 +38,11 @@ made.
 
 Current benchmark target:
 
-- `world_step_bench`: measures `World::step` for 1024 non-overlapping sphere
-  bodies over a fixed timestep. This includes integration, AABB proxy creation,
-  the current scratch-backed x-axis sweep-and-prune AABB broadphase, sphere
-  narrowphase contact generation, and mostly avoids collision response.
+- `world_step_bench`: measures `World::step` for 1024 static sphere bodies over
+  a fixed timestep across sparse-grid, dense-grid, and all-overlapping
+  distributions. This includes integration, AABB proxy creation, the current
+  scratch-backed x-axis sweep-and-prune AABB broadphase, sphere narrowphase
+  contact generation, and collision response where contacts are valid.
 - `vec3_bench`: measures one million scalar `Vec3::dot` operations and reports
   total time plus nanoseconds per operation. The result is accumulated into a
   printed checksum so Release builds cannot optimize the loop away.
@@ -54,9 +55,11 @@ Current benchmark target:
 
 Initial local sample:
 
-| Benchmark     | Bodies | Warmup | Samples |       Avg |       p95 |       p99 |       Max |
-| ------------- | -----: | -----: | ------: | --------: | --------: | --------: | --------: |
-| `World::step` |   1024 |    100 |    1000 | 60727.5 ns | 93125 ns | 100458 ns | 185375 ns |
+| `World::step` distribution | Bodies | Warmup | Samples |          Avg |      p95 |       p99 |       Max |
+| -------------------------- | -----: | -----: | ------: | -----------: | -------: | --------: | --------: |
+| Sparse grid                |   1024 |    100 |    1000 |  42906.6 ns |  64333 ns |  102292 ns |  451667 ns |
+| Dense grid                 |   1024 |    100 |    1000 |   109701 ns | 119708 ns |  177417 ns |  214750 ns |
+| All overlapping            |   1024 |    100 |    1000 | 3247470 ns | 3655834 ns | 4013042 ns | 4367958 ns |
 
 | Benchmark   | Operations |     Total | Per operation |
 | ----------- | ---------: | --------: | ------------: |
@@ -77,11 +80,11 @@ Initial local sample:
 
 Interpretation: on the sparse 1024-body `World::step` workload, replacing the
 all-pairs broadphase with scratch-backed sweep-and-prune reduces average step
-time from the earlier 565306 ns sample to 60727.5 ns. The standalone
-sweep-and-prune benchmark is much faster for sparse and dense grid cases, but
-slower for the all-overlapping worst case because every candidate pair is still
-emitted and the current implementation sorts candidates to preserve baseline
-deterministic order.
+time from the earlier 565306 ns dynamic-body sample to 42906.6 ns for the
+current static-body sparse distribution. Dense scenes remain under 0.12 ms on
+average, while the all-overlapping worst case rises to about 3.25 ms because
+every broadphase pair is emitted and sorted before narrowphase rejects
+ambiguous identical-center sphere contacts.
 
 Environment for the sample above:
 

@@ -1,25 +1,52 @@
 #include "physics/World.hpp"
-#include <algorithm>
-#include <cstdint>
-#include <vector>
 
+#include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <string_view>
+#include <vector>
 
 namespace {
-World createWorld(std::size_t bodyCount) {
+enum class Distribution {
+  SparseGrid,
+  DenseGrid,
+  AllOverlapping,
+};
+
+std::string_view distributionName(Distribution distribution) {
+  switch (distribution) {
+  case Distribution::SparseGrid:
+    return "sparse_grid";
+  case Distribution::DenseGrid:
+    return "dense_grid";
+  case Distribution::AllOverlapping:
+    return "all_overlapping";
+  }
+
+  return "unknown";
+}
+
+World createWorld(std::size_t bodyCount, Distribution distribution) {
   World world(Vec3(0.f, -9.8f, 0.f));
   world.reserveRigidBodies(bodyCount);
 
   for (std::size_t i = 0; i < bodyCount; ++i) {
-    const World::RigidBodyId body = world.createRigidBody(1.0f, 0.25f);
+    const World::RigidBodyId body = world.createRigidBody(0.0f, 0.25f);
 
-    const float x = static_cast<float>(i % 64) * 2.0f;
-    const float y = static_cast<float>(i / 64) * 2.0f;
+    Vec3 position(0.f, 0.f, 0.f);
 
-    world.rigidBody(body).position = Vec3(x, y, 0.f);
-    world.rigidBody(body).velocity = Vec3(0.1f, -0.2f, 0.f);
+    if (distribution != Distribution::AllOverlapping) {
+      const float spacing = distribution == Distribution::SparseGrid ? 2.0f : 0.4f;
+      position = Vec3(static_cast<float>(i % 64) * spacing,
+                      static_cast<float>(i / 64) * spacing,
+                      0.f);
+    }
+
+    world.rigidBody(body).position = position;
+    world.rigidBody(body).velocity = Vec3(0.f, 0.f, 0.f);
   }
 
   return world;
@@ -40,15 +67,10 @@ std::uint64_t percentileNanoseconds(const std::vector<std::uint64_t>& samples, d
       static_cast<std::size_t>(percentile * static_cast<double>(samples.size() - 1));
   return samples[index];
 }
-} // namespace
 
-int main() {
-  constexpr std::size_t bodyCount = 1024;
-  constexpr float dt = 1.0f / 60.0f;
-  constexpr int warmupSteps = 100;
-  constexpr int measuredSteps = 1000;
-
-  World world = createWorld(bodyCount);
+void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
+             int measuredSteps, float dt) {
+  World world = createWorld(bodyCount, distribution);
 
   for (int i = 0; i < warmupSteps; ++i) {
     world.step(dt);
@@ -77,6 +99,7 @@ int main() {
   const std::uint64_t p99 = percentileNanoseconds(samples, 0.99);
 
   std::cout << "World::step benchmark\n";
+  std::cout << "distribution: " << distributionName(distribution) << '\n';
   std::cout << "body_count: " << bodyCount << '\n';
   std::cout << "warmup_steps: " << warmupSteps << '\n';
   std::cout << "measured_steps: " << measuredSteps << '\n';
@@ -84,6 +107,24 @@ int main() {
   std::cout << "p95_ns: " << p95 << '\n';
   std::cout << "p99_ns: " << p99 << '\n';
   std::cout << "max_ns: " << samples.back() << '\n';
+  std::cout << '\n';
+}
+} // namespace
+
+int main() {
+  constexpr std::size_t bodyCount = 1024;
+  constexpr float dt = 1.0f / 60.0f;
+  constexpr int warmupSteps = 100;
+  constexpr int measuredSteps = 1000;
+  constexpr std::array<Distribution, 3> distributions = {
+      Distribution::SparseGrid,
+      Distribution::DenseGrid,
+      Distribution::AllOverlapping,
+  };
+
+  for (const Distribution distribution : distributions) {
+    runCase(bodyCount, distribution, warmupSteps, measuredSteps, dt);
+  }
 
   return 0;
 }

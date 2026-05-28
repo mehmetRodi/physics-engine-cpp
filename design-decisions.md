@@ -515,15 +515,18 @@ show the 1024-body sparse-grid standalone broadphase case improving from about
 dense-grid case improving from about 578246 ns to about 90277 ns. The
 all-overlapping 1024-body standalone case regresses from about 1022290 ns to
 about 2340630 ns because every candidate pair is still emitted and the
-order-preserving candidate sort adds work. On the sparse 1024-body
-`World::step` benchmark, average step latency improved from the earlier 565306
-ns sample to 60727.5 ns after integrating scratch-backed SAP.
+order-preserving candidate sort adds work. The integrated `World::step`
+benchmark now covers stable static-body sparse-grid, dense-grid, and
+all-overlapping distributions. On Apple M4 with 1024 bodies, the sparse-grid
+case averages about 42906.6 ns, the dense-grid case averages about 109701 ns,
+and the all-overlapping case averages about 3247470 ns.
 
 Future direction: keep the O(n^2) baseline for correctness comparison and
-worst-case reference. Add more `World::step` distributions, especially dense
-and all-overlapping scenes, before claiming broadphase performance broadly.
-Evaluate BVH only after SAP's measured tradeoffs are documented against
-workloads that justify the additional tree-building complexity.
+worst-case reference. Add dynamic-body world benchmarks separately from stable
+static-distribution benchmarks before making solver or contact-resolution
+performance claims. Evaluate BVH only after SAP's measured tradeoffs are
+documented against workloads that justify the additional tree-building
+complexity.
 
 ## Linear Damping Policy
 
