@@ -8,3 +8,5 @@ struct AABB {
 
   bool overlaps(const AABB& other) const;
 };
+
+AABB makeAABBForSphere(const Vec3& center, float radius);

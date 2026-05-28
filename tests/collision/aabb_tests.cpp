@@ -41,3 +41,27 @@ TEST(AABBTests, BoxesSeparatedOnOneAxisDoNotOverlap) {
   EXPECT_FALSE(a.overlaps(b));
   EXPECT_FALSE(b.overlaps(a));
 }
+
+TEST(AABBTests, SphereBoundsExpandCenterByRadius) {
+  const AABB bounds = makeAABBForSphere(Vec3(2.f, -3.f, 4.f), 1.5f);
+
+  EXPECT_FLOAT_EQ(bounds.min.x, 0.5f);
+  EXPECT_FLOAT_EQ(bounds.min.y, -4.5f);
+  EXPECT_FLOAT_EQ(bounds.min.z, 2.5f);
+
+  EXPECT_FLOAT_EQ(bounds.max.x, 3.5f);
+  EXPECT_FLOAT_EQ(bounds.max.y, -1.5f);
+  EXPECT_FLOAT_EQ(bounds.max.z, 5.5f);
+}
+
+TEST(AABBTests, ZeroRadiusSphereBoundsCollapseToCenter) {
+  const AABB bounds = makeAABBForSphere(Vec3(2.f, -3.f, 4.f), 0.f);
+
+  EXPECT_FLOAT_EQ(bounds.min.x, 2.f);
+  EXPECT_FLOAT_EQ(bounds.min.y, -3.f);
+  EXPECT_FLOAT_EQ(bounds.min.z, 4.f);
+
+  EXPECT_FLOAT_EQ(bounds.max.x, 2.f);
+  EXPECT_FLOAT_EQ(bounds.max.y, -3.f);
+  EXPECT_FLOAT_EQ(bounds.max.z, 4.f);
+}
