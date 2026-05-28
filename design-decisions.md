@@ -442,21 +442,24 @@ hiding hot-path gather/scatter overhead.
 
 ## World Collision Pair Discovery
 
-Decision: `World::resolveCollisions` builds sphere proxies from the current body
-storage, calls `findSpherePairs`, and then resolves the returned body-index
-pairs.
+Decision: rigid-body collision discovery now builds AABB proxies from the
+current body storage, generates deterministic AABB broadphase candidate pairs,
+then runs sphere narrowphase/contact generation over those candidates.
 
-Why now: this moves pair discovery out of `World` without changing the current
-body ownership model. `World` remains responsible for simulation flow and contact
-response, while `collision/` owns the deterministic sphere-pair query.
+Why now: Phase 5 needs a correct broadphase baseline before optimizing with
+sweep-and-prune, BVH, or another spatial structure. A conservative AABB
+broadphase can produce false positives, such as touching sphere bounds, while
+the sphere narrowphase still decides whether an actual contact exists.
 
-Tradeoff: `World` still builds rigid-body sphere proxies each step because the
-current body storage is the source of truth. This is simple and correct for the
-current engine shape, but it is not the final broadphase representation.
+Tradeoff: the current AABB broadphase is still O(n^2), so it is not faster by
+design. Its value is architectural: it separates broadphase candidate generation
+from narrowphase contact creation while preserving deterministic pair order and
+the no-allocation reserved hot path.
 
-Future direction: as contacts become explicit solver data, move from direct pair
-resolution toward a pipeline of body proxies, collision pairs, contact
-manifolds, and solver constraints.
+Future direction: benchmark this baseline across body counts and distributions,
+then compare optimized broadphase options against it. Keep the contact pipeline
+conservative: broadphase may over-report candidates, but it must not miss pairs
+that narrowphase should inspect.
 
 ## Linear Damping Policy
 
