@@ -66,6 +66,97 @@ int longestCentroidAxis(const std::vector<AABBProxy>& proxies,
 
   return 2;
 }
+
+std::size_t buildBVHNode(const std::vector<AABBProxy>& proxies,
+                         AABBBVHScratch& scratch,
+                         std::size_t begin,
+                         std::size_t end) {
+  if (end - begin == 1) {
+    const std::size_t proxyIndex = scratch.proxyIndices[begin];
+    const std::size_t nodeIndex = scratch.nodes.size();
+    scratch.nodes.push_back({proxies[proxyIndex].bounds, 0, 0, proxyIndex, true});
+    return nodeIndex;
+  }
+
+  const int axis = longestCentroidAxis(proxies, scratch.proxyIndices, begin, end);
+
+  std::sort(scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(begin),
+            scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(end),
+            [&proxies, axis](std::size_t lhs, std::size_t rhs) {
+              const float lhsCentroid = centroidComponent(proxies[lhs], axis);
+              const float rhsCentroid = centroidComponent(proxies[rhs], axis);
+
+              if (lhsCentroid != rhsCentroid) {
+                return lhsCentroid < rhsCentroid;
+              }
+
+              return lhs < rhs;
+            });
+
+  const std::size_t mid = begin + (end - begin) / 2;
+  const std::size_t leftChild = buildBVHNode(proxies, scratch, begin, mid);
+  const std::size_t rightChild = buildBVHNode(proxies, scratch, mid, end);
+
+  const std::size_t nodeIndex = scratch.nodes.size();
+  scratch.nodes.push_back({
+      mergeAABBs(scratch.nodes[leftChild].bounds, scratch.nodes[rightChild].bounds),
+      leftChild,
+      rightChild,
+      0,
+      false,
+  });
+  return nodeIndex;
+}
+
+void emitOverlappingLeafPairs(const AABBBVHScratch& scratch,
+                              std::size_t leftNodeIndex,
+                              std::size_t rightNodeIndex,
+                              std::vector<AABBPair>& outProxyIndexPairs) {
+  const AABBBVHNode& left = scratch.nodes[leftNodeIndex];
+  const AABBBVHNode& right = scratch.nodes[rightNodeIndex];
+
+  if (!left.bounds.overlaps(right.bounds)) {
+    return;
+  }
+
+  if (left.leaf && right.leaf) {
+    const std::size_t firstIndex = std::min(left.proxyIndex, right.proxyIndex);
+    const std::size_t secondIndex = std::max(left.proxyIndex, right.proxyIndex);
+    outProxyIndexPairs.push_back({firstIndex, secondIndex});
+    return;
+  }
+
+  if (left.leaf) {
+    emitOverlappingLeafPairs(scratch, leftNodeIndex, right.leftChild, outProxyIndexPairs);
+    emitOverlappingLeafPairs(scratch, leftNodeIndex, right.rightChild, outProxyIndexPairs);
+    return;
+  }
+
+  if (right.leaf) {
+    emitOverlappingLeafPairs(scratch, left.leftChild, rightNodeIndex, outProxyIndexPairs);
+    emitOverlappingLeafPairs(scratch, left.rightChild, rightNodeIndex, outProxyIndexPairs);
+    return;
+  }
+
+  emitOverlappingLeafPairs(scratch, left.leftChild, right.leftChild, outProxyIndexPairs);
+  emitOverlappingLeafPairs(scratch, left.leftChild, right.rightChild, outProxyIndexPairs);
+  emitOverlappingLeafPairs(scratch, left.rightChild, right.leftChild, outProxyIndexPairs);
+  emitOverlappingLeafPairs(scratch, left.rightChild, right.rightChild, outProxyIndexPairs);
+}
+
+void collectBVHPairs(const AABBBVHScratch& scratch,
+                     std::size_t nodeIndex,
+                     std::vector<AABBPair>& outProxyIndexPairs) {
+  const AABBBVHNode& node = scratch.nodes[nodeIndex];
+
+  if (node.leaf) {
+    return;
+  }
+
+  collectBVHPairs(scratch, node.leftChild, outProxyIndexPairs);
+  collectBVHPairs(scratch, node.rightChild, outProxyIndexPairs);
+  emitOverlappingLeafPairs(scratch, node.leftChild, node.rightChild, outProxyIndexPairs);
+}
 } // namespace
 
 void AABBSweepAndPruneScratch::reserve(std::size_t proxyCapacity) {
@@ -186,16 +277,26 @@ void findAABBPairsBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scr
     return;
   }
 
-  if (proxies.size() == 2) {
-    scratch.nodes.push_back({proxies[0].bounds, 0, 0, 0, true});
-    scratch.nodes.push_back({proxies[1].bounds, 0, 0, 1, true});
-    scratch.nodes.push_back({mergeAABBs(proxies[0].bounds, proxies[1].bounds), 0, 1, 0, false});
+  scratch.proxyIndices.resize(proxies.size());
+  std::iota(scratch.proxyIndices.begin(), scratch.proxyIndices.end(), std::size_t{0});
 
-    if (scratch.nodes[0].bounds.overlaps(scratch.nodes[1].bounds)) {
-      outPairs.push_back(
-          {proxies[scratch.nodes[0].proxyIndex].id, proxies[scratch.nodes[1].proxyIndex].id});
-    }
-    return;
+  const std::size_t rootNode =
+      buildBVHNode(proxies, scratch, 0, scratch.proxyIndices.size());
+  collectBVHPairs(scratch, rootNode, scratch.candidateProxyIndexPairs);
+
+  std::sort(scratch.candidateProxyIndexPairs.begin(),
+            scratch.candidateProxyIndexPairs.end(),
+            [](const AABBPair& lhs, const AABBPair& rhs) {
+              if (lhs.a != rhs.a) {
+                return lhs.a < rhs.a;
+              }
+
+              return lhs.b < rhs.b;
+            });
+
+  outPairs.reserve(scratch.candidateProxyIndexPairs.size());
+  for (const AABBPair& candidate : scratch.candidateProxyIndexPairs) {
+    outPairs.push_back({proxies[candidate.a].id, proxies[candidate.b].id});
   }
 }
 
