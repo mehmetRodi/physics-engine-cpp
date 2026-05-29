@@ -40,8 +40,12 @@ struct AABBBVHScratch {
   void reserve(std::size_t proxyCapacity);
 };
 
-void findAABBPairs(const std::vector<AABBProxy>& proxies,
-                   std::vector<AABBPair>& outPairs);
+struct AABBBVHBuildResult {
+  std::size_t rootNode = 0;
+  bool empty = true;
+};
+
+void findAABBPairs(const std::vector<AABBProxy>& proxies, std::vector<AABBPair>& outPairs);
 
 std::vector<AABBPair> findAABBPairs(const std::vector<AABBProxy>& proxies);
 
@@ -49,14 +53,20 @@ void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
                                 std::vector<AABBPair>& outPairs);
 
 void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
-                                AABBSweepAndPruneScratch& scratch,
-                                std::vector<AABBPair>& outPairs);
+                                AABBSweepAndPruneScratch& scratch, std::vector<AABBPair>& outPairs);
 
-std::vector<AABBPair>
-findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies);
+std::vector<AABBPair> findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies);
 
-void findAABBPairsBVH(const std::vector<AABBProxy>& proxies,
-                      AABBBVHScratch& scratch,
+void findAABBPairsBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scratch,
                       std::vector<AABBPair>& outPairs);
 
 std::vector<AABBPair> findAABBPairsBVH(const std::vector<AABBProxy>& proxies);
+
+AABBBVHBuildResult buildAABBBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scratch);
+
+void collectAABBBVHPairCandidates(const AABBBVHScratch& scratch, std::size_t rootNode,
+                                  std::vector<AABBPair>& outProxyIndexPairs);
+
+void emitSortedAABBPairsFromProxyIndexPairs(const std::vector<AABBProxy>& proxies,
+                                            std::vector<AABBPair>& proxyIndexPairs,
+                                            std::vector<AABBPair>& outPairs);

@@ -52,6 +52,8 @@ Current benchmark target:
 - `aabb_pair_bench`: measures the deterministic O(n^2) AABB baseline and a
   standalone x-axis sweep-and-prune broadphase across sparse, dense, and
   all-overlapping distributions at multiple body counts.
+- `bvh_pair_bench`: measures the top-down centroid BVH broadphase as separate
+  build, traversal, and deterministic sort/emit stages.
 - `collision_pipeline_bench`: measures the rigid-body collision pipeline stages
   separately for 1024 static sphere bodies: AABB proxy build, sweep-and-prune
   broadphase, sphere narrowphase/contact generation, and contact resolution.
@@ -248,6 +250,8 @@ cmake --build build-release --target sphere_pair_bench
 ./build-release/sphere_pair_bench
 cmake --build build-release --target aabb_pair_bench
 ./build-release/aabb_pair_bench
+cmake --build build-release --target bvh_pair_bench
+./build-release/bvh_pair_bench
 cmake --build build-release --target collision_pipeline_bench
 ./build-release/collision_pipeline_bench
 ```

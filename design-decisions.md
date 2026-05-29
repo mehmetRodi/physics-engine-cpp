@@ -328,13 +328,21 @@ dense grid from about 262 us to 249 us, and all-overlapping from about 18.09 ms
 to 17.85 ms. The result confirms that build partitioning cost matters, but it
 does not change the current broadphase choice.
 
+Stage breakdown: a dedicated `bvh_pair_bench` now measures BVH build,
+traversal, and deterministic sort/emit costs separately. A 1024-body Release
+sample shows sparse grid dominated by build cost at about 172 us build time,
+4.0 us traversal time, and near-zero sort/emit time. Dense grid is also mostly
+build cost, at about 171 us build, 50 us traversal, and 41 us sort/emit. The
+all-overlapping case is dominated by candidate handling: about 57 us build,
+2.42 ms traversal, and 15.45 ms deterministic sort/emit for 523,776 candidate
+pairs.
+
 Status: accepted as a benchmark comparison candidate, not yet accepted as the
 production broadphase.
 
-Future direction: benchmark BVH build and query costs separately. Consider
-`std::nth_element` median splitting, iterative traversal, persistent or
-incremental BVH updates, and representative dynamic workloads before
-integrating BVH into `World::step`.
+Future direction: consider iterative traversal, persistent or incremental BVH
+updates, cheaper deterministic pair ordering, and representative dynamic
+workloads before integrating BVH into `World::step`.
 
 ## Reserved Rigid-Body Step Allocation Policy
 
