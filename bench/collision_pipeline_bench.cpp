@@ -14,8 +14,7 @@ public:
   }
 
   static void findAABBPairs(RigidBodySystem& system) {
-    findAABBPairsSweepAndPrune(system.m_aabbProxies, system.m_aabbSweepScratch,
-                               system.m_aabbPairs);
+    findAABBPairsSweepAndPrune(system.m_aabbProxies, system.m_aabbSweepScratch, system.m_aabbPairs);
   }
 
   static void buildContacts(RigidBodySystem& system) {
@@ -73,9 +72,8 @@ RigidBodySystem createRigidBodySystem(std::size_t bodyCount, Distribution distri
 
     if (distribution != Distribution::AllOverlapping) {
       const float spacing = distribution == Distribution::SparseGrid ? 2.0f : 0.4f;
-      position = Vec3(static_cast<float>(i % 64) * spacing,
-                      static_cast<float>(i / 64) * spacing,
-                      0.f);
+      position =
+          Vec3(static_cast<float>(i % 64) * spacing, static_cast<float>(i / 64) * spacing, 0.f);
     }
 
     system.rigidBody(body).position = position;
@@ -85,8 +83,7 @@ RigidBodySystem createRigidBodySystem(std::size_t bodyCount, Distribution distri
   return system;
 }
 
-template <typename Function>
-std::uint64_t measureNanoseconds(Function&& function) {
+template <typename Function> std::uint64_t measureNanoseconds(Function&& function) {
   const auto start = Clock::now();
   function();
   const auto end = Clock::now();
@@ -102,8 +99,7 @@ void runCollisionPipeline(RigidBodySystem& system) {
   RigidBodySystemInstrumentationAccess::resolveContacts(system);
 }
 
-void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
-             int measuredSteps) {
+void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps, int measuredSteps) {
   RigidBodySystem system = createRigidBodySystem(bodyCount, distribution);
 
   for (int i = 0; i < warmupSteps; ++i) {
@@ -114,18 +110,14 @@ void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
   RigidBodyCollisionPipelineStats stats;
 
   for (int i = 0; i < measuredSteps; ++i) {
-    timings.aabbProxyBuildNs += measureNanoseconds([&system]() {
-      RigidBodySystemInstrumentationAccess::buildAABBProxies(system);
-    });
-    timings.broadphaseNs += measureNanoseconds([&system]() {
-      RigidBodySystemInstrumentationAccess::findAABBPairs(system);
-    });
-    timings.contactGenerationNs += measureNanoseconds([&system]() {
-      RigidBodySystemInstrumentationAccess::buildContacts(system);
-    });
-    timings.contactResolutionNs += measureNanoseconds([&system]() {
-      RigidBodySystemInstrumentationAccess::resolveContacts(system);
-    });
+    timings.aabbProxyBuildNs += measureNanoseconds(
+        [&system]() { RigidBodySystemInstrumentationAccess::buildAABBProxies(system); });
+    timings.broadphaseNs += measureNanoseconds(
+        [&system]() { RigidBodySystemInstrumentationAccess::findAABBPairs(system); });
+    timings.contactGenerationNs += measureNanoseconds(
+        [&system]() { RigidBodySystemInstrumentationAccess::buildContacts(system); });
+    timings.contactResolutionNs += measureNanoseconds(
+        [&system]() { RigidBodySystemInstrumentationAccess::resolveContacts(system); });
 
     stats = system.collisionPipelineStats();
   }
@@ -142,8 +134,8 @@ void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
   std::cout << "last_contacts: " << stats.contactCount << '\n';
   std::cout << "avg_aabb_proxy_build_ns: "
             << static_cast<double>(timings.aabbProxyBuildNs) / iterations << '\n';
-  std::cout << "avg_broadphase_ns: "
-            << static_cast<double>(timings.broadphaseNs) / iterations << '\n';
+  std::cout << "avg_broadphase_ns: " << static_cast<double>(timings.broadphaseNs) / iterations
+            << '\n';
   std::cout << "avg_contact_generation_ns: "
             << static_cast<double>(timings.contactGenerationNs) / iterations << '\n';
   std::cout << "avg_contact_resolution_ns: "

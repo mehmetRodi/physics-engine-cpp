@@ -48,8 +48,8 @@ int main() {
       std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
   const std::size_t totalPairChecks = pairsPerIteration * iterations;
-  const double nanosecondsPerPairCheck = static_cast<double>(totalNanoseconds) /
-                                         static_cast<double>(totalPairChecks);
+  const double nanosecondsPerPairCheck =
+      static_cast<double>(totalNanoseconds) / static_cast<double>(totalPairChecks);
 
   std::cout << "Sphere pair-check benchmark\n";
   std::cout << "body_count: " << bodyCount << '\n';

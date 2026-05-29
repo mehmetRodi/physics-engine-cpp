@@ -48,8 +48,7 @@ std::string_view distributionName(Distribution distribution) {
   return "unknown";
 }
 
-std::vector<AABBProxy> createAABBProxies(std::size_t bodyCount,
-                                         Distribution distribution) {
+std::vector<AABBProxy> createAABBProxies(std::size_t bodyCount, Distribution distribution) {
   std::vector<AABBProxy> proxies;
   proxies.reserve(bodyCount);
 
@@ -58,9 +57,8 @@ std::vector<AABBProxy> createAABBProxies(std::size_t bodyCount,
 
     if (distribution != Distribution::AllOverlapping) {
       const float spacing = distribution == Distribution::SparseGrid ? 3.0f : 0.75f;
-      center = Vec3(static_cast<float>(i % 64) * spacing,
-                    static_cast<float>(i / 64) * spacing,
-                    0.0f);
+      center =
+          Vec3(static_cast<float>(i % 64) * spacing, static_cast<float>(i / 64) * spacing, 0.0f);
     }
 
     proxies.push_back({i, makeAABBForSphere(center, 0.5f)});
@@ -80,8 +78,7 @@ int iterationsForBodyCount(std::size_t bodyCount) {
 }
 
 void findPairs(Method method, const std::vector<AABBProxy>& proxies,
-               AABBSweepAndPruneScratch& sweepScratch,
-               std::vector<AABBPair>& pairs) {
+               AABBSweepAndPruneScratch& sweepScratch, std::vector<AABBPair>& pairs) {
   switch (method) {
   case Method::Baseline:
     findAABBPairs(proxies, pairs);

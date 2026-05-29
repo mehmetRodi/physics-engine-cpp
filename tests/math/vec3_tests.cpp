@@ -3,7 +3,7 @@
 
 namespace {
 
-void expectVec3Near(const Vec3 &actual, const Vec3 &expected, float tolerance = 1e-6f) {
+void expectVec3Near(const Vec3& actual, const Vec3& expected, float tolerance = 1e-6f) {
   EXPECT_NEAR(actual.x, expected.x, tolerance);
   EXPECT_NEAR(actual.y, expected.y, tolerance);
   EXPECT_NEAR(actual.z, expected.z, tolerance);

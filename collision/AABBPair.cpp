@@ -22,8 +22,7 @@ void AABBBVHScratch::reserve(std::size_t proxyCapacity) {
   candidateProxyIndexPairs.reserve(pairCapacityForProxyCount(proxyCapacity));
 }
 
-void findAABBPairs(const std::vector<AABBProxy>& proxies,
-                   std::vector<AABBPair>& outPairs) {
+void findAABBPairs(const std::vector<AABBProxy>& proxies, std::vector<AABBPair>& outPairs) {
   outPairs.clear();
 
   for (std::size_t i = 0; i < proxies.size(); ++i) {
@@ -63,8 +62,7 @@ void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
   }
 
   scratch.sortedProxyIndices.resize(proxies.size());
-  std::iota(scratch.sortedProxyIndices.begin(), scratch.sortedProxyIndices.end(),
-            std::size_t{0});
+  std::iota(scratch.sortedProxyIndices.begin(), scratch.sortedProxyIndices.end(), std::size_t{0});
 
   std::sort(scratch.sortedProxyIndices.begin(), scratch.sortedProxyIndices.end(),
             [&proxies](std::size_t lhs, std::size_t rhs) {
@@ -99,8 +97,7 @@ void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
     }
   }
 
-  std::sort(scratch.candidateProxyIndexPairs.begin(),
-            scratch.candidateProxyIndexPairs.end(),
+  std::sort(scratch.candidateProxyIndexPairs.begin(), scratch.candidateProxyIndexPairs.end(),
             [](const AABBPair& lhs, const AABBPair& rhs) {
               if (lhs.a != rhs.a) {
                 return lhs.a < rhs.a;
@@ -115,15 +112,13 @@ void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
   }
 }
 
-std::vector<AABBPair>
-findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies) {
+std::vector<AABBPair> findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies) {
   std::vector<AABBPair> pairs;
   findAABBPairsSweepAndPrune(proxies, pairs);
   return pairs;
 }
 
-void findAABBPairsBVH(const std::vector<AABBProxy>& proxies,
-                      AABBBVHScratch& scratch,
+void findAABBPairsBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scratch,
                       std::vector<AABBPair>& outPairs) {
   outPairs.clear();
   scratch.proxyIndices.clear();

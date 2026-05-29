@@ -40,9 +40,8 @@ World createWorld(std::size_t bodyCount, Distribution distribution) {
 
     if (distribution != Distribution::AllOverlapping) {
       const float spacing = distribution == Distribution::SparseGrid ? 2.0f : 0.4f;
-      position = Vec3(static_cast<float>(i % 64) * spacing,
-                      static_cast<float>(i / 64) * spacing,
-                      0.f);
+      position =
+          Vec3(static_cast<float>(i % 64) * spacing, static_cast<float>(i / 64) * spacing, 0.f);
     }
 
     world.rigidBody(body).position = position;
@@ -68,8 +67,8 @@ std::uint64_t percentileNanoseconds(const std::vector<std::uint64_t>& samples, d
   return samples[index];
 }
 
-void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps,
-             int measuredSteps, float dt) {
+void runCase(std::size_t bodyCount, Distribution distribution, int warmupSteps, int measuredSteps,
+             float dt) {
   World world = createWorld(bodyCount, distribution);
 
   for (int i = 0; i < warmupSteps; ++i) {
