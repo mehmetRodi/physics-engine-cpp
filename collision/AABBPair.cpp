@@ -79,21 +79,22 @@ std::size_t buildBVHNode(const std::vector<AABBProxy>& proxies,
   }
 
   const int axis = longestCentroidAxis(proxies, scratch.proxyIndices, begin, end);
-
-  std::sort(scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(begin),
-            scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(end),
-            [&proxies, axis](std::size_t lhs, std::size_t rhs) {
-              const float lhsCentroid = centroidComponent(proxies[lhs], axis);
-              const float rhsCentroid = centroidComponent(proxies[rhs], axis);
-
-              if (lhsCentroid != rhsCentroid) {
-                return lhsCentroid < rhsCentroid;
-              }
-
-              return lhs < rhs;
-            });
-
   const std::size_t mid = begin + (end - begin) / 2;
+
+  std::nth_element(scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(begin),
+                   scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(mid),
+                   scratch.proxyIndices.begin() + static_cast<std::ptrdiff_t>(end),
+                   [&proxies, axis](std::size_t lhs, std::size_t rhs) {
+                     const float lhsCentroid = centroidComponent(proxies[lhs], axis);
+                     const float rhsCentroid = centroidComponent(proxies[rhs], axis);
+
+                     if (lhsCentroid != rhsCentroid) {
+                       return lhsCentroid < rhsCentroid;
+                     }
+
+                     return lhs < rhs;
+                   });
+
   const std::size_t leftChild = buildBVHNode(proxies, scratch, begin, mid);
   const std::size_t rightChild = buildBVHNode(proxies, scratch, mid, end);
 

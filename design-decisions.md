@@ -314,12 +314,19 @@ project should compare multiple broadphase approaches before deciding which one
 belongs in `World::step`. BVH is useful as a more general spatial hierarchy,
 even if the first implementation is not expected to outperform SAP immediately.
 
-Tradeoff: the current BVH rebuilds the full tree each query, recursively sorts
-proxy ranges during construction, traverses recursively, and sorts emitted
-proxy-index pairs to restore baseline deterministic order. This keeps behavior
-correct and comparable, but adds overhead. Initial benchmarks show BVH can beat
-the O(n^2) baseline at 1024 sparse/dense workloads, but it is slower than SAP
-and much slower in all-overlapping scenes.
+Tradeoff: the current BVH rebuilds the full tree each query, partitions proxy
+ranges by centroid median during construction, traverses recursively, and sorts
+emitted proxy-index pairs to restore baseline deterministic order. This keeps
+behavior correct and comparable, but adds overhead. Initial benchmarks show BVH
+can beat the O(n^2) baseline at 1024 sparse/dense workloads, but it is slower
+than SAP and much slower in all-overlapping scenes.
+
+Measurement note: replacing recursive full-range sorting with
+`std::nth_element` median splitting preserved correctness and modestly reduced
+1024-body BVH iteration cost: sparse grid improved from about 188 us to 166 us,
+dense grid from about 262 us to 249 us, and all-overlapping from about 18.09 ms
+to 17.85 ms. The result confirms that build partitioning cost matters, but it
+does not change the current broadphase choice.
 
 Status: accepted as a benchmark comparison candidate, not yet accepted as the
 production broadphase.

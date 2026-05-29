@@ -82,6 +82,9 @@ Initial local sample:
 | Sweep-and-prune x-axis | Sparse grid     |   1024 |         38 |               0 |   899875 ns |      0.0452119 ns |    23680.9 ns |
 | Sweep-and-prune x-axis | Dense grid      |   1024 |         38 |            3858 |  3430542 ns |       0.172359 ns |    90277.4 ns |
 | Sweep-and-prune x-axis | All overlapping |   1024 |         38 |          523776 | 88944042 ns |        4.46877 ns |    2340630 ns |
+| Top-down centroid BVH  | Sparse grid     |   1024 |         38 |               0 |  6317334 ns |       0.317398 ns |     166246 ns |
+| Top-down centroid BVH  | Dense grid      |   1024 |         38 |            3858 |  9445208 ns |        0.47455 ns |     248558 ns |
+| Top-down centroid BVH  | All overlapping |   1024 |         38 |          523776 | 678445334 ns |       34.0868 ns |   17853800 ns |
 
 | Collision pipeline distribution | Bodies | Candidate pairs | Contacts | AABB proxy build | Broadphase | Contact generation | Contact resolution | Total |
 | -------------------------------- | -----: | --------------: | -------: | ---------------: | ---------: | -----------------: | -----------------: | ----: |
@@ -101,8 +104,11 @@ The collision-pipeline breakdown shows the same bottleneck more directly:
 sparse and dense scenes are dominated by broadphase work, while the
 all-overlapping worst case is dominated by sweep-and-prune pair emission/order
 restoration plus narrowphase scanning over every candidate pair. This does not
-yet justify a BVH; the pathological all-overlapping scene would also be hard
-for tree-based broadphase structures.
+justify replacing SAP with BVH in `World::step` yet; the pathological
+all-overlapping scene would also be hard for tree-based broadphase structures.
+The current top-down BVH is useful as a comparison candidate: it beats the
+O(n^2) baseline in the 1024-body sparse and dense AABB benchmark cases, but it
+is still slower than SAP and much slower when every AABB overlaps.
 
 Environment for the sample above:
 
