@@ -22,6 +22,7 @@ enum class Distribution {
 enum class Method {
   Baseline,
   SweepAndPrune,
+  BVH,
 };
 
 std::string_view methodName(Method method) {
@@ -30,6 +31,8 @@ std::string_view methodName(Method method) {
     return "baseline_o_n2";
   case Method::SweepAndPrune:
     return "sweep_and_prune_x_axis";
+  case Method::BVH:
+    return "bvh_top_down_centroid";
   }
 
   return "unknown";
@@ -78,13 +81,18 @@ int iterationsForBodyCount(std::size_t bodyCount) {
 }
 
 void findPairs(Method method, const std::vector<AABBProxy>& proxies,
-               AABBSweepAndPruneScratch& sweepScratch, std::vector<AABBPair>& pairs) {
+               AABBSweepAndPruneScratch& sweepScratch,
+               AABBBVHScratch& bvhScratch,
+               std::vector<AABBPair>& pairs) {
   switch (method) {
   case Method::Baseline:
     findAABBPairs(proxies, pairs);
     return;
   case Method::SweepAndPrune:
     findAABBPairsSweepAndPrune(proxies, sweepScratch, pairs);
+    return;
+  case Method::BVH:
+    findAABBPairsBVH(proxies, bvhScratch, pairs);
     return;
   }
 }
@@ -100,12 +108,15 @@ void runCase(Method method, std::size_t bodyCount, Distribution distribution) {
   AABBSweepAndPruneScratch sweepScratch;
   sweepScratch.reserve(bodyCount);
 
+  AABBBVHScratch bvhScratch;
+  bvhScratch.reserve(bodyCount);
+
   std::size_t checksum = 0;
 
   const auto start = Clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-    findPairs(method, proxies, sweepScratch, pairs);
+    findPairs(method, proxies, sweepScratch, bvhScratch, pairs);
     checksum += pairs.size();
   }
 
@@ -142,13 +153,15 @@ int main() {
       Distribution::DenseGrid,
       Distribution::AllOverlapping,
   };
-  constexpr std::array<Method, 2> methods = {
+  constexpr std::array<Method, 3> methods = {
       Method::Baseline,
       Method::SweepAndPrune,
+      Method::BVH,
   };
 
   std::cout << "AABB broadphase benchmark\n";
-  std::cout << "methods: deterministic O(n^2) baseline and x-axis sweep-and-prune\n\n";
+  std::cout << "methods: deterministic O(n^2) baseline, x-axis sweep-and-prune, "
+               "and top-down centroid BVH\n\n";
 
   for (const Method method : methods) {
     for (const std::size_t bodyCount : bodyCounts) {
