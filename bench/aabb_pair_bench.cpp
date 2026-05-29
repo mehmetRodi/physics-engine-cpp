@@ -126,7 +126,7 @@ void runCase(Method method, std::size_t bodyCount, Distribution distribution) {
       std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
   const std::size_t totalPossiblePairs = possiblePairsPerIteration * iterations;
-  const double nanosecondsPerPossiblePair =
+  const double nanosecondsPerTheoreticalPair =
       static_cast<double>(totalNanoseconds) / static_cast<double>(totalPossiblePairs);
   const double nanosecondsPerIteration =
       static_cast<double>(totalNanoseconds) / static_cast<double>(iterations);
@@ -139,7 +139,7 @@ void runCase(Method method, std::size_t bodyCount, Distribution distribution) {
   std::cout << "total_possible_pairs: " << totalPossiblePairs << '\n';
   std::cout << "last_candidate_pairs: " << pairs.size() << '\n';
   std::cout << "total_ns: " << totalNanoseconds << '\n';
-  std::cout << "ns_per_possible_pair: " << nanosecondsPerPossiblePair << '\n';
+  std::cout << "ns_per_theoretical_pair: " << nanosecondsPerTheoreticalPair << '\n';
   std::cout << "ns_per_iteration: " << nanosecondsPerIteration << '\n';
   std::cout << "checksum: " << checksum << '\n';
   std::cout << '\n';

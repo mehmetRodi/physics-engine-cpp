@@ -74,7 +74,7 @@ Initial local sample:
 | ----------------- | -----: | ---------: | ----------: | ----------: | -------------: |
 | Sphere pair check |   1024 |        100 |    52377600 | 67440208 ns |     1.28758 ns |
 
-| AABB broadphase method | Distribution    | Bodies | Iterations | Candidate pairs |       Total | Per possible pair | Per iteration |
+| AABB broadphase method | Distribution    | Bodies | Iterations | Candidate pairs |       Total | Per theoretical pair | Per iteration |
 | ---------------------- | --------------- | -----: | ---------: | --------------: | ----------: | ----------------: | ------------: |
 | O(n^2) baseline        | Sparse grid     |   1024 |         38 |               0 | 20759875 ns |        1.04303 ns |     546312 ns |
 | O(n^2) baseline        | Dense grid      |   1024 |         38 |            3858 | 21973333 ns |        1.10399 ns |     578246 ns |
@@ -109,6 +109,12 @@ all-overlapping scene would also be hard for tree-based broadphase structures.
 The current top-down BVH is useful as a comparison candidate: it beats the
 O(n^2) baseline in the 1024-body sparse and dense AABB benchmark cases, but it
 is still slower than SAP and much slower when every AABB overlaps.
+
+The AABB broadphase table's "per theoretical pair" column is normalized by the
+`n * (n - 1) / 2` pair count that the O(n^2) baseline would consider. For
+pruning broadphases such as SAP and BVH, it is not the measured cost of one
+actual pair check; `Per iteration` is the direct wall-clock cost of each
+broadphase pass.
 
 Environment for the sample above:
 
