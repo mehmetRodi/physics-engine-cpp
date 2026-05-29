@@ -9,6 +9,63 @@ namespace {
 std::size_t pairCapacityForProxyCount(std::size_t proxyCount) {
   return proxyCount * (proxyCount - 1) / 2;
 }
+
+AABB mergeAABBs(const AABB& a, const AABB& b) {
+  return {
+      Vec3(std::min(a.min.x, b.min.x), std::min(a.min.y, b.min.y), std::min(a.min.z, b.min.z)),
+      Vec3(std::max(a.max.x, b.max.x), std::max(a.max.y, b.max.y), std::max(a.max.z, b.max.z)),
+  };
+}
+
+Vec3 aabbCentroid(const AABB& bounds) {
+  return (bounds.min + bounds.max) * 0.5f;
+}
+
+float centroidComponent(const AABBProxy& proxy, int axis) {
+  const Vec3 centroid = aabbCentroid(proxy.bounds);
+
+  if (axis == 0) {
+    return centroid.x;
+  }
+
+  if (axis == 1) {
+    return centroid.y;
+  }
+
+  return centroid.z;
+}
+
+int longestCentroidAxis(const std::vector<AABBProxy>& proxies,
+                        const std::vector<std::size_t>& proxyIndices,
+                        std::size_t begin,
+                        std::size_t end) {
+  Vec3 minCentroid = aabbCentroid(proxies[proxyIndices[begin]].bounds);
+  Vec3 maxCentroid = minCentroid;
+
+  for (std::size_t i = begin + 1; i < end; ++i) {
+    const Vec3 centroid = aabbCentroid(proxies[proxyIndices[i]].bounds);
+
+    minCentroid.x = std::min(minCentroid.x, centroid.x);
+    minCentroid.y = std::min(minCentroid.y, centroid.y);
+    minCentroid.z = std::min(minCentroid.z, centroid.z);
+
+    maxCentroid.x = std::max(maxCentroid.x, centroid.x);
+    maxCentroid.y = std::max(maxCentroid.y, centroid.y);
+    maxCentroid.z = std::max(maxCentroid.z, centroid.z);
+  }
+
+  const Vec3 extent = maxCentroid - minCentroid;
+
+  if (extent.x >= extent.y && extent.x >= extent.z) {
+    return 0;
+  }
+
+  if (extent.y >= extent.z) {
+    return 1;
+  }
+
+  return 2;
+}
 } // namespace
 
 void AABBSweepAndPruneScratch::reserve(std::size_t proxyCapacity) {
@@ -130,8 +187,13 @@ void findAABBPairsBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scr
   }
 
   if (proxies.size() == 2) {
-    if (proxies[0].bounds.overlaps(proxies[1].bounds)) {
-      outPairs.push_back({proxies[0].id, proxies[1].id});
+    scratch.nodes.push_back({proxies[0].bounds, 0, 0, 0, true});
+    scratch.nodes.push_back({proxies[1].bounds, 0, 0, 1, true});
+    scratch.nodes.push_back({mergeAABBs(proxies[0].bounds, proxies[1].bounds), 0, 1, 0, false});
+
+    if (scratch.nodes[0].bounds.overlaps(scratch.nodes[1].bounds)) {
+      outPairs.push_back(
+          {proxies[scratch.nodes[0].proxyIndex].id, proxies[scratch.nodes[1].proxyIndex].id});
     }
     return;
   }
