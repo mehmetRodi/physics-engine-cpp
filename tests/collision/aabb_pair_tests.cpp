@@ -161,6 +161,31 @@ TEST(AABBPairTests, BVHScratchOverloadMatchesBaselineForMixedProxies) {
   expectPairsEqual(pairs, findAABBPairs(proxies));
 }
 
+TEST(AABBPairTests, BVHStagedAPIProducesSamePairsAsConvenienceAPI) {
+  const std::vector<AABBProxy> proxies = {
+      {10, {Vec3(4.f, 0.f, 0.f), Vec3(6.f, 2.f, 2.f)}},
+      {20, {Vec3(0.f, 0.f, 0.f), Vec3(2.f, 2.f, 2.f)}},
+      {30, {Vec3(1.f, 1.f, 0.f), Vec3(3.f, 3.f, 2.f)}},
+      {40, {Vec3(5.f, 1.f, 0.f), Vec3(7.f, 3.f, 2.f)}},
+      {50, {Vec3(8.f, 8.f, 0.f), Vec3(9.f, 9.f, 1.f)}},
+  };
+
+  AABBBVHScratch scratch;
+  scratch.reserve(proxies.size());
+
+  const AABBBVHBuildResult buildResult = buildAABBBVH(proxies, scratch);
+  ASSERT_FALSE(buildResult.empty);
+
+  std::vector<AABBPair> proxyIndexPairs;
+  collectAABBBVHPairCandidates(scratch, buildResult.rootNode, proxyIndexPairs);
+
+  std::vector<AABBPair> pairs;
+  emitSortedAABBPairsFromProxyIndexPairs(proxies, proxyIndexPairs, pairs);
+
+  expectPairsEqual(pairs, findAABBPairsBVH(proxies));
+  expectPairsEqual(pairs, findAABBPairs(proxies));
+}
+
 TEST(AABBPairTests, OutputVectorOverloadClearsPreviousContents) {
   const std::vector<AABBProxy> proxies = {
       {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
