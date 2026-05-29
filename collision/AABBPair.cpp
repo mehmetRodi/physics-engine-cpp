@@ -128,6 +128,13 @@ void findAABBPairsBVH(const std::vector<AABBProxy>& proxies, AABBBVHScratch& scr
   if (proxies.size() < 2) {
     return;
   }
+
+  if (proxies.size() == 2) {
+    if (proxies[0].bounds.overlaps(proxies[1].bounds)) {
+      outPairs.push_back({proxies[0].id, proxies[1].id});
+    }
+    return;
+  }
 }
 
 std::vector<AABBPair> findAABBPairsBVH(const std::vector<AABBProxy>& proxies) {

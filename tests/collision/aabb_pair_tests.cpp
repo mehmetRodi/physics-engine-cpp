@@ -169,6 +169,24 @@ TEST(AABBPairTests, BVHSingleProxyProducesNoPairs) {
   EXPECT_TRUE(findAABBPairsBVH(proxies).empty());
 }
 
+TEST(AABBPairTests, BVHSeparatedTwoProxyInputProducesNoPairs) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
+      {1, {Vec3(2.f, 2.f, 2.f), Vec3(3.f, 3.f, 3.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsBVH(proxies), findAABBPairs(proxies));
+}
+
+TEST(AABBPairTests, BVHOverlappingTwoProxyInputProducesOnePair) {
+  const std::vector<AABBProxy> proxies = {
+      {10, {Vec3(0.f, 0.f, 0.f), Vec3(2.f, 2.f, 2.f)}},
+      {20, {Vec3(1.f, 1.f, 1.f), Vec3(3.f, 3.f, 3.f)}},
+  };
+
+  expectPairsEqual(findAABBPairsBVH(proxies), findAABBPairs(proxies));
+}
+
 TEST(AABBPairTests, BVHOutputVectorOverloadClearsPreviousContents) {
   const std::vector<AABBProxy> proxies;
 
