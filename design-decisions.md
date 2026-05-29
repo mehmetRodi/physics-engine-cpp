@@ -304,6 +304,31 @@ Revisit BVH only after representative workloads show broadphase cost that a
 tree can plausibly reduce, and keep before/after benchmark numbers alongside
 the change.
 
+## Top-Down Centroid BVH Broadphase Candidate
+
+Decision: add a deterministic top-down centroid BVH broadphase as a comparison
+candidate against the O(n^2) AABB baseline and x-axis sweep-and-prune.
+
+Context: SAP is currently strong for sparse and dense grid workloads, but the
+project should compare multiple broadphase approaches before deciding which one
+belongs in `World::step`. BVH is useful as a more general spatial hierarchy,
+even if the first implementation is not expected to outperform SAP immediately.
+
+Tradeoff: the current BVH rebuilds the full tree each query, recursively sorts
+proxy ranges during construction, traverses recursively, and sorts emitted
+proxy-index pairs to restore baseline deterministic order. This keeps behavior
+correct and comparable, but adds overhead. Initial benchmarks show BVH can beat
+the O(n^2) baseline at 1024 sparse/dense workloads, but it is slower than SAP
+and much slower in all-overlapping scenes.
+
+Status: accepted as a benchmark comparison candidate, not yet accepted as the
+production broadphase.
+
+Future direction: benchmark BVH build and query costs separately. Consider
+`std::nth_element` median splitting, iterative traversal, persistent or
+incremental BVH updates, and representative dynamic workloads before
+integrating BVH into `World::step`.
+
 ## Reserved Rigid-Body Step Allocation Policy
 
 Decision: `World::reserveRigidBodies(capacity)` preallocates current
