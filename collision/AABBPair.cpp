@@ -16,6 +16,12 @@ void AABBSweepAndPruneScratch::reserve(std::size_t proxyCapacity) {
   candidateProxyIndexPairs.reserve(pairCapacityForProxyCount(proxyCapacity));
 }
 
+void AABBBVHScratch::reserve(std::size_t proxyCapacity) {
+  proxyIndices.reserve(proxyCapacity);
+  nodes.reserve(proxyCapacity == 0 ? 0 : proxyCapacity * 2 - 1);
+  candidateProxyIndexPairs.reserve(pairCapacityForProxyCount(proxyCapacity));
+}
+
 void findAABBPairs(const std::vector<AABBProxy>& proxies,
                    std::vector<AABBPair>& outPairs) {
   outPairs.clear();
@@ -113,5 +119,25 @@ std::vector<AABBPair>
 findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies) {
   std::vector<AABBPair> pairs;
   findAABBPairsSweepAndPrune(proxies, pairs);
+  return pairs;
+}
+
+void findAABBPairsBVH(const std::vector<AABBProxy>& proxies,
+                      AABBBVHScratch& scratch,
+                      std::vector<AABBPair>& outPairs) {
+  outPairs.clear();
+  scratch.proxyIndices.clear();
+  scratch.nodes.clear();
+  scratch.candidateProxyIndexPairs.clear();
+
+  if (proxies.size() < 2) {
+    return;
+  }
+}
+
+std::vector<AABBPair> findAABBPairsBVH(const std::vector<AABBProxy>& proxies) {
+  std::vector<AABBPair> pairs;
+  AABBBVHScratch scratch;
+  findAABBPairsBVH(proxies, scratch, pairs);
   return pairs;
 }

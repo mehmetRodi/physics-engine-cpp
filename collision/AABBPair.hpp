@@ -23,6 +23,23 @@ struct AABBSweepAndPruneScratch {
   void reserve(std::size_t proxyCapacity);
 };
 
+struct AABBBVHNode {
+  AABB bounds;
+  std::size_t leftChild = 0;
+  std::size_t rightChild = 0;
+  std::size_t proxyIndex = 0;
+  bool leaf = false;
+};
+
+struct AABBBVHScratch {
+  std::vector<std::size_t> proxyIndices;
+  std::vector<AABBBVHNode> nodes;
+  // Stores proxy indices so BVH can restore baseline input-order output.
+  std::vector<AABBPair> candidateProxyIndexPairs;
+
+  void reserve(std::size_t proxyCapacity);
+};
+
 void findAABBPairs(const std::vector<AABBProxy>& proxies,
                    std::vector<AABBPair>& outPairs);
 
@@ -37,3 +54,9 @@ void findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies,
 
 std::vector<AABBPair>
 findAABBPairsSweepAndPrune(const std::vector<AABBProxy>& proxies);
+
+void findAABBPairsBVH(const std::vector<AABBProxy>& proxies,
+                      AABBBVHScratch& scratch,
+                      std::vector<AABBPair>& outPairs);
+
+std::vector<AABBPair> findAABBPairsBVH(const std::vector<AABBProxy>& proxies);

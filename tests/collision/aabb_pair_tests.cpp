@@ -154,3 +154,27 @@ TEST(AABBPairTests, SweepAndPruneOutputVectorOverloadClearsPreviousContents) {
 
   EXPECT_TRUE(pairs.empty());
 }
+
+TEST(AABBPairTests, BVHEmptyInputProducesNoPairs) {
+  const std::vector<AABBProxy> proxies;
+
+  EXPECT_TRUE(findAABBPairsBVH(proxies).empty());
+}
+
+TEST(AABBPairTests, BVHSingleProxyProducesNoPairs) {
+  const std::vector<AABBProxy> proxies = {
+      {0, {Vec3(0.f, 0.f, 0.f), Vec3(1.f, 1.f, 1.f)}},
+  };
+
+  EXPECT_TRUE(findAABBPairsBVH(proxies).empty());
+}
+
+TEST(AABBPairTests, BVHOutputVectorOverloadClearsPreviousContents) {
+  const std::vector<AABBProxy> proxies;
+
+  std::vector<AABBPair> pairs = {{100, 200}};
+  AABBBVHScratch scratch;
+  findAABBPairsBVH(proxies, scratch, pairs);
+
+  EXPECT_TRUE(pairs.empty());
+}
