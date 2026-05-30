@@ -1,7 +1,7 @@
 #include "physics/RigidBody.hpp"
 #include <algorithm>
 RigidBody::RigidBody(float mass, float radius)
-    : mass(mass), radius(radius), shape{ShapeType::Sphere, radius} {
+    : mass(mass), shape{ShapeType::Sphere, radius} {
   if (mass > 0.0f)
     invMass = 1.0f / mass;
   else

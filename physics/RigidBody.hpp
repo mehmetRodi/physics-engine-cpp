@@ -21,7 +21,6 @@ struct RigidBody {
   Vec3 acceleration;
   float mass;
   float invMass; // Used for multiplication cuz it is faster
-  float radius;  // Temporary compatibility while sphere path moves to shape metadata.
   RigidBodyShape shape;
   BodyMaterial material;
 

@@ -26,8 +26,10 @@ TEST(RigidBodyContactTests, BuildsAABBProxiesFromRigidBodySpheres) {
   const RigidBodySystem::RigidBodyId body0 = system.createRigidBody(1.0f, 0.5f);
   const RigidBodySystem::RigidBodyId body1 = system.createRigidBody(1.0f, 1.25f);
 
-  system.rigidBody(body0).radius = 100.0f;
-  system.rigidBody(body1).radius = 100.0f;
+  EXPECT_EQ(system.rigidBody(body0).shape.type, ShapeType::Sphere);
+  EXPECT_FLOAT_EQ(system.rigidBody(body0).shape.sphereRadius, 0.5f);
+  EXPECT_EQ(system.rigidBody(body1).shape.type, ShapeType::Sphere);
+  EXPECT_FLOAT_EQ(system.rigidBody(body1).shape.sphereRadius, 1.25f);
 
   system.rigidBody(body0).position = Vec3(2.0f, -3.0f, 4.0f);
   system.rigidBody(body1).position = Vec3(-1.0f, 0.5f, 3.0f);

@@ -168,23 +168,24 @@ void constrainToArena(World& world, std::vector<RenderBody>& bodies) {
 
     RigidBody& body = world.rigidBody(renderBody.id);
     const float restitution = body.material.restitution;
+    const float radius = body.shape.sphereRadius;
 
-    if (body.position.x - body.radius < left) {
-      body.position.x = left + body.radius;
+    if (body.position.x - radius < left) {
+      body.position.x = left + radius;
       body.velocity.x = std::abs(body.velocity.x) * restitution;
       renderBody.contactFlash = contactHighlightSeconds;
-    } else if (body.position.x + body.radius > right) {
-      body.position.x = right - body.radius;
+    } else if (body.position.x + radius > right) {
+      body.position.x = right - radius;
       body.velocity.x = -std::abs(body.velocity.x) * restitution;
       renderBody.contactFlash = contactHighlightSeconds;
     }
 
-    if (body.position.y - body.radius < top) {
-      body.position.y = top + body.radius;
+    if (body.position.y - radius < top) {
+      body.position.y = top + radius;
       body.velocity.y = std::abs(body.velocity.y) * restitution;
       renderBody.contactFlash = contactHighlightSeconds;
-    } else if (body.position.y + body.radius > bottom) {
-      body.position.y = bottom - body.radius;
+    } else if (body.position.y + radius > bottom) {
+      body.position.y = bottom - radius;
       body.velocity.y = -std::abs(body.velocity.y) * restitution;
       renderBody.contactFlash = contactHighlightSeconds;
     }
@@ -207,7 +208,8 @@ void updatePresentationState(DemoScene& scene) {
     for (std::size_t j = i + 1; j < scene.bodies.size(); ++j) {
       RigidBody& b = scene.world.rigidBody(scene.bodies[j].id);
       const Vec3 offset = a.position - b.position;
-      const float nearDistance = a.radius + b.radius + nearContactTolerance;
+      const float nearDistance =
+          a.shape.sphereRadius + b.shape.sphereRadius + nearContactTolerance;
       if (offset.lengthSq() <= nearDistance * nearDistance) {
         scene.bodies[i].contactFlash = contactHighlightSeconds;
         scene.bodies[j].contactFlash = contactHighlightSeconds;
@@ -352,15 +354,16 @@ void drawBodies(sf::RenderWindow& window, const DemoScene& scene) {
         contactHighlightSeconds > 0.0f
             ? std::clamp(renderBody.contactFlash / contactHighlightSeconds, 0.0f, 1.0f)
             : 0.0f;
+    const float radius = body.shape.sphereRadius;
 
-    glow.setRadius(body.radius + 6.0f + flash * 5.0f);
+    glow.setRadius(radius + 6.0f + flash * 5.0f);
     glow.setOrigin(glow.getRadius(), glow.getRadius());
     glow.setPosition(body.position.x, body.position.y);
     glow.setFillColor(withAlpha(renderBody.color, renderBody.isStatic ? 24 : 34));
     window.draw(glow);
 
-    shape.setRadius(body.radius);
-    shape.setOrigin(body.radius, body.radius);
+    shape.setRadius(radius);
+    shape.setOrigin(radius, radius);
     shape.setPosition(body.position.x, body.position.y);
     shape.setFillColor(renderBody.isStatic ? sf::Color(88, 96, 106) : renderBody.color);
     shape.setOutlineThickness(renderBody.isStatic ? 3.0f : 2.0f);
