@@ -33,6 +33,16 @@ bool buildSphereSphereContact(RigidBodySystem::RigidBodyId aId, const RigidBody&
   };
   return true;
 }
+
+bool buildContactForShapes(RigidBodySystem::RigidBodyId aId, const RigidBody& a,
+                           RigidBodySystem::RigidBodyId bId, const RigidBody& b,
+                           RigidBodyContact& outContact) {
+  if (a.shape.type == ShapeType::Sphere && b.shape.type == ShapeType::Sphere) {
+    return buildSphereSphereContact(aId, a, bId, b, outContact);
+  }
+
+  return false;
+}
 } // namespace
 
 RigidBodySystem::RigidBodyId RigidBodySystem::createRigidBody(float mass, float radius) {
@@ -128,7 +138,7 @@ void RigidBodySystem::buildContacts() {
     const RigidBody& body2 = m_bodies[pair.b];
 
     RigidBodyContact contact{};
-    if (buildSphereSphereContact(pair.a, body1, pair.b, body2, contact)) {
+    if (buildContactForShapes(pair.a, body1, pair.b, body2, contact)) {
       m_contacts.push_back(contact);
     }
   }
