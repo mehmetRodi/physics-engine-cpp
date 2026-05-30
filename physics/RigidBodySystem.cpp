@@ -51,7 +51,7 @@ void RigidBodySystem::buildAABBProxies() {
 
   for (std::size_t i = 0; i < m_bodies.size(); ++i) {
     const RigidBody& body = m_bodies[i];
-    m_aabbProxies.push_back({i, makeAABBForSphere(body.position, body.radius)});
+    m_aabbProxies.push_back({i, makeAABBForSphere(body.position, body.shape.sphereRadius)});
   }
 }
 
@@ -106,7 +106,9 @@ void RigidBodySystem::buildContacts() {
     }
 
     const float distance = offset.length();
-    const float penetration = body1.radius + body2.radius - distance;
+    const float radius1 = body1.shape.sphereRadius;
+    const float radius2 = body2.shape.sphereRadius;
+    const float penetration = radius1 + radius2 - distance;
 
     if (penetration <= 0.f) {
       continue;

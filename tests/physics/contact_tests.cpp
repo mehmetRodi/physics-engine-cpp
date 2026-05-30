@@ -26,6 +26,9 @@ TEST(RigidBodyContactTests, BuildsAABBProxiesFromRigidBodySpheres) {
   const RigidBodySystem::RigidBodyId body0 = system.createRigidBody(1.0f, 0.5f);
   const RigidBodySystem::RigidBodyId body1 = system.createRigidBody(1.0f, 1.25f);
 
+  system.rigidBody(body0).radius = 100.0f;
+  system.rigidBody(body1).radius = 100.0f;
+
   system.rigidBody(body0).position = Vec3(2.0f, -3.0f, 4.0f);
   system.rigidBody(body1).position = Vec3(-1.0f, 0.5f, 3.0f);
 
