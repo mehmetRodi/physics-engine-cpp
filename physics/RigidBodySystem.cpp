@@ -43,6 +43,14 @@ bool buildContactForShapes(RigidBodySystem::RigidBodyId aId, const RigidBody& a,
 
   return false;
 }
+
+AABB buildAABBForShape(const RigidBody& body) {
+  if (body.shape.type == ShapeType::Sphere) {
+    return makeAABBForSphere(body.position, body.shape.sphereRadius);
+  }
+
+  return {};
+}
 } // namespace
 
 RigidBodySystem::RigidBodyId RigidBodySystem::createRigidBody(float mass, float radius) {
@@ -90,7 +98,7 @@ void RigidBodySystem::buildAABBProxies() {
 
   for (std::size_t i = 0; i < m_bodies.size(); ++i) {
     const RigidBody& body = m_bodies[i];
-    m_aabbProxies.push_back({i, makeAABBForSphere(body.position, body.shape.sphereRadius)});
+    m_aabbProxies.push_back({i, buildAABBForShape(body)});
   }
 }
 
