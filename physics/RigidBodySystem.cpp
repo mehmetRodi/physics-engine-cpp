@@ -45,11 +45,12 @@ bool buildContactForShapes(RigidBodySystem::RigidBodyId aId, const RigidBody& a,
 }
 
 AABB buildAABBForShape(const RigidBody& body) {
-  if (body.shape.type == ShapeType::Sphere) {
+  switch (body.shape.type) {
+  case ShapeType::Sphere:
     return makeAABBForSphere(body.position, body.shape.sphereRadius);
   }
 
-  return {};
+  return makeAABBForSphere(body.position, 0.0f);
 }
 } // namespace
 
