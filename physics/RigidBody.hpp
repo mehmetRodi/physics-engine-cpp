@@ -6,13 +6,23 @@ struct BodyMaterial {
   float linearDamping = 0.0f;
 };
 
+enum class ShapeType {
+  Sphere,
+};
+
+struct RigidBodyShape {
+  ShapeType type = ShapeType::Sphere;
+  float sphereRadius = 0.0f;
+};
+
 struct RigidBody {
   Vec3 position;
   Vec3 velocity;
   Vec3 acceleration;
   float mass;
   float invMass; // Used for multiplication cuz it is faster
-  float radius;  // radius to be used in collision detection
+  float radius;  // Temporary compatibility while sphere path moves to shape metadata.
+  RigidBodyShape shape;
   BodyMaterial material;
 
   RigidBody(float mass, float radius);
