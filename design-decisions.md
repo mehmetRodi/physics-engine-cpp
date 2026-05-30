@@ -267,6 +267,31 @@ float mixRestitution(const BodyMaterial& a, const BodyMaterial& b);
 That keeps `World` focused on simulation flow while contact generation prepares
 solver-ready data.
 
+## Rigid-Body Shape Metadata
+
+Decision: `RigidBody` stores explicit `RigidBodyShape` metadata with a
+`ShapeType` tag. The currently implemented shape is `ShapeType::Sphere` with a
+`sphereRadius`.
+
+Context: the collision pipeline is moving from a sphere-only rigid-body model
+toward shape-aware broadphase and narrowphase code. The existing sphere behavior
+needed to become a named shape representation before adding boxes, convex
+shapes, or GJK.
+
+Tradeoff: a small tagged shape struct keeps the current hot path simple,
+deterministic, allocation-free, and easy to inspect. It avoids virtual shape
+objects or heap-owned polymorphism before measurements or multiple shape types
+justify that complexity. The cost is that the shape model is still minimal and
+only supports spheres today.
+
+Status: accepted as Phase 5 groundwork. Broadphase proxy generation and current
+sphere contact generation read from shape metadata. Narrowphase still supports
+sphere-sphere contacts only.
+
+Future direction: add explicit narrowphase dispatch for supported shape pairs.
+Add box and convex shape metadata only with focused tests. Add GJK for convex
+intersection before considering EPA or richer contact manifolds.
+
 ## Collision Pipeline Stage Instrumentation
 
 Decision: add a dedicated `collision_pipeline_bench` that measures rigid-body
