@@ -6,6 +6,35 @@
 
 #include <algorithm>
 
+namespace {
+bool buildSphereSphereContact(RigidBodySystem::RigidBodyId aId, const RigidBody& a,
+                              RigidBodySystem::RigidBodyId bId, const RigidBody& b,
+                              RigidBodyContact& outContact) {
+  const Vec3 offset = a.position - b.position;
+  const float distanceSq = offset.lengthSq();
+
+  if (distanceSq < 1e-12f) {
+    return false;
+  }
+
+  const float distance = offset.length();
+  const float penetration = a.shape.sphereRadius + b.shape.sphereRadius - distance;
+
+  if (penetration <= 0.0f) {
+    return false;
+  }
+
+  outContact = {
+      aId,
+      bId,
+      offset / distance,
+      penetration,
+      std::max(a.material.restitution, b.material.restitution),
+  };
+  return true;
+}
+} // namespace
+
 RigidBodySystem::RigidBodyId RigidBodySystem::createRigidBody(float mass, float radius) {
   RigidBodyId id = m_bodies.size();
   m_bodies.emplace_back(mass, radius);
@@ -98,28 +127,9 @@ void RigidBodySystem::buildContacts() {
     const RigidBody& body1 = m_bodies[pair.a];
     const RigidBody& body2 = m_bodies[pair.b];
 
-    const Vec3 offset = body1.position - body2.position;
-    const float distanceSq = offset.lengthSq();
-
-    if (distanceSq < 1e-12f) {
-      continue;
+    RigidBodyContact contact{};
+    if (buildSphereSphereContact(pair.a, body1, pair.b, body2, contact)) {
+      m_contacts.push_back(contact);
     }
-
-    const float distance = offset.length();
-    const float radius1 = body1.shape.sphereRadius;
-    const float radius2 = body2.shape.sphereRadius;
-    const float penetration = radius1 + radius2 - distance;
-
-    if (penetration <= 0.f) {
-      continue;
-    }
-
-    m_contacts.push_back({
-        pair.a,
-        pair.b,
-        offset / distance,
-        penetration,
-        std::max(body1.material.restitution, body2.material.restitution),
-    });
   }
 }
